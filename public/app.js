@@ -71,9 +71,9 @@
     if (!modal) return;
 
     modal.classList.add('open', 'active');
-    modal.style.display = 'flex';
-
-    document.body.style.overflow = 'hidden';
+modal.style.display = 'grid';
+modal.style.placeItems = 'center';
+document.body.style.overflow = 'hidden';
   }
 
   function closeModal(modalOrId) {
@@ -99,8 +99,7 @@
 
     const anyOpen =
       [...document.querySelectorAll('.modal')]
-        .some(
-          m => m.style.display === 'flex'
+       .some(m => m.style.display === 'grid');
         );
 
     if (!anyOpen) {
