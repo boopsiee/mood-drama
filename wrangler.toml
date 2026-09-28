@@ -2,13 +2,7 @@ name = "mood-drama"
 pages_build_output_dir = "public"
 compatibility_date = "2026-09-01"
 
-# After creating your resources, replace these placeholders or bind them in
-# Cloudflare Dashboard > Workers & Pages > your project > Settings > Bindings.
-# [[d1_databases]]
-# binding = "DB"
-# database_name = "mood-drama-db"
-# database_id = "YOUR_D1_DATABASE_ID"
-#
-# [[r2_buckets]]
-# binding = "VIDEOS"
-# bucket_name = "mood-drama-videos"
+[[d1_databases]]
+binding = "DB"
+database_name = "drama"
+database_id = "fc65ad7b-3aec-4095-967a-00688703d517"
