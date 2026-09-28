@@ -71,9 +71,12 @@
     if (!modal) return;
 
     modal.classList.add('open', 'active');
-modal.style.display = 'grid';
-modal.style.placeItems = 'center';
-document.body.style.overflow = 'hidden';
+
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+
+    document.body.style.overflow = 'hidden';
   }
 
   function closeModal(modalOrId) {
@@ -85,7 +88,10 @@ document.body.style.overflow = 'hidden';
     if (!modal) return;
 
     modal.classList.remove('open', 'active');
+
     modal.style.display = 'none';
+    modal.style.alignItems = '';
+    modal.style.justifyContent = '';
 
     if (modal.id === 'playerModal') {
       const video = $('video');
@@ -99,12 +105,21 @@ document.body.style.overflow = 'hidden';
 
     const anyOpen =
       [...document.querySelectorAll('.modal')]
-       .some(m => m.style.display === 'grid');
+        .some(
+          m => m.style.display === 'flex'
         );
 
     if (!anyOpen) {
       document.body.style.overflow = '';
     }
+  }
+
+  function closeAllModals() {
+    document
+      .querySelectorAll('.modal')
+      .forEach(
+        modal => closeModal(modal)
+      );
   }
 
   function setButtonBusy(
@@ -152,6 +167,8 @@ document.body.style.overflow = 'hidden';
       return true;
     }
 
+    closeAllModals();
+
     setAuthMode('login');
     openModal('authModal');
 
@@ -166,12 +183,14 @@ document.body.style.overflow = 'hidden';
 
     document
       .querySelectorAll('[data-tab]')
-      .forEach(btn => {
-        btn.classList.toggle(
-          'active',
-          btn.dataset.tab === state.authMode
-        );
-      });
+      .forEach(
+        btn => {
+          btn.classList.toggle(
+            'active',
+            btn.dataset.tab === state.authMode
+          );
+        }
+      );
 
     const isRegister =
       state.authMode === 'register';
@@ -356,7 +375,7 @@ document.body.style.overflow = 'hidden';
       showMessage(
         $('authError'),
         error.message ||
-          'Алдаа гарлаа.',
+        'Алдаа гарлаа.',
         true
       );
     } finally {
@@ -378,15 +397,9 @@ document.body.style.overflow = 'hidden';
     } catch {}
 
     state.user = null;
-
-    state.subscriptionExpiresAt =
-      null;
-
-    state.selectedMovie =
-      null;
-
-    state.currentPurchase =
-      null;
+    state.subscriptionExpiresAt = null;
+    state.selectedMovie = null;
+    state.currentPurchase = null;
 
     updateAccountUI();
 
@@ -438,8 +451,8 @@ document.body.style.overflow = 'hidden';
           ]
             .filter(Boolean)
             .some(
-              v =>
-                String(v)
+              value =>
+                String(value)
                   .toLowerCase()
                   .includes(query)
             );
@@ -528,11 +541,12 @@ document.body.style.overflow = 'hidden';
           card.addEventListener(
             'click',
             () => {
-              openMovieDetail(
+              const id =
                 Number(
                   card.dataset.movieId
-                )
-              );
+                );
+
+              openMovieDetail(id);
             }
           );
         }
@@ -554,10 +568,12 @@ document.body.style.overflow = 'hidden';
 
     if ($('detailPoster')) {
       $('detailPoster').src =
-        movie.poster_url || '';
+        movie.poster_url ||
+        '';
 
       $('detailPoster').alt =
-        movie.title || '';
+        movie.title ||
+        '';
 
       $('detailPoster').style.display =
         movie.poster_url
@@ -735,6 +751,8 @@ document.body.style.overflow = 'hidden';
 
         updateAccountUI();
 
+        closeAllModals();
+
         setAuthMode(
           'login'
         );
@@ -805,7 +823,7 @@ document.body.style.overflow = 'hidden';
       showMessage(
         $('paymentStatus'),
         error.message ||
-          'Мэдэгдэл илгээж чадсангүй.',
+        'Мэдэгдэл илгээж чадсангүй.',
         true
       );
 
@@ -909,7 +927,8 @@ document.body.style.overflow = 'hidden';
 
     if (textEl) {
       textEl.textContent =
-        text || '';
+        text ||
+        '';
     }
   }
 
@@ -1319,17 +1338,20 @@ document.body.style.overflow = 'hidden';
 
     if ($('editTitle')) {
       $('editTitle').value =
-        movie.title || '';
+        movie.title ||
+        '';
     }
 
     if ($('editGenre')) {
       $('editGenre').value =
-        movie.genre || '';
+        movie.genre ||
+        '';
     }
 
     if ($('editDesc')) {
       $('editDesc').value =
-        movie.description || '';
+        movie.description ||
+        '';
     }
 
     if ($('editDuration')) {
@@ -1353,6 +1375,10 @@ document.body.style.overflow = 'hidden';
       $('editUploadText'),
       0,
       ''
+    );
+
+    closeModal(
+      'adminModal'
     );
 
     openModal(
@@ -1827,6 +1853,8 @@ document.body.style.overflow = 'hidden';
       return;
     }
 
+    closeAllModals();
+
     renderAdminMovies();
 
     openModal(
@@ -1980,6 +2008,12 @@ document.body.style.overflow = 'hidden';
         modal => {
           modal.style.display =
             'none';
+
+          modal.style.alignItems =
+            '';
+
+          modal.style.justifyContent =
+            '';
         }
       );
 
@@ -2032,6 +2066,8 @@ document.body.style.overflow = 'hidden';
         'click',
         async () => {
           if (!state.user) {
+            closeAllModals();
+
             setAuthMode(
               'login'
             );
@@ -2159,7 +2195,10 @@ document.body.style.overflow = 'hidden';
                 )
               ]
                 .reverse()
-                ..find(m => m.style.display === 'grid');
+                .find(
+                  m =>
+                    m.style.display ===
+                    'flex'
                 );
 
             if (open) {
