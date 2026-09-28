@@ -21,6 +21,8 @@ export async function onRequest(context) {
     if (path[0] === 'stream-url' && path[1] && method === 'GET') return streamUrl(request, env, Number(path[1]));
     if (path[0] === 'purchases' && method === 'POST') return createPurchase(request, env);
     if (path[0] === 'purchases' && method === 'GET') return myPurchases(request, env);
+    if (path[0] === 'purchases' && path[1] && path[2] === 'confirm' && method === 'POST')
+  return confirmPurchase(request, env, Number(path[1]));
 
     if (path[0] === 'admin' && path[1] === 'upload-url' && method === 'POST') return adminUploadUrl(request, env);
     if (path[0] === 'admin' && path[1] === 'movies' && method === 'POST') return adminCreateMovie(request, env);
