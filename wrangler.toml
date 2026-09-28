@@ -6,3 +6,6 @@ compatibility_date = "2026-09-01"
 binding = "DB"
 database_name = "drama"
 database_id = "fc65ad7b-3aec-4095-967a-00688703d517"
+[[r2_buckets]]
+binding = "VIDEOS"
+bucket_name = "mood-drama-videos"
