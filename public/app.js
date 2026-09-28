@@ -13,8 +13,10 @@
     editingMovie: null
   };
 
-  function escapeHtml(value = '') {
-    return String(value)
+  let adminRefreshTimer = null;
+
+  function esc(v = '') {
+    return String(v)
       .replaceAll('&', '&amp;')
       .replaceAll('<', '&lt;')
       .replaceAll('>', '&gt;')
@@ -22,8 +24,8 @@
       .replaceAll("'", '&#039;');
   }
 
-  function money(n) {
-    return `${Number(n || 0).toLocaleString('mn-MN')}₮`;
+  function money(v) {
+    return `${Number(v || 0).toLocaleString('mn-MN')}₮`;
   }
 
   async function api(url, options = {}) {
@@ -40,8 +42,8 @@
       opts.body = JSON.stringify(options.body);
     }
 
-    const response = await fetch(url, opts);
-    const raw = await response.text();
+    const res = await fetch(url, opts);
+    const raw = await res.text();
 
     let data = {};
 
@@ -49,130 +51,201 @@
       try {
         data = JSON.parse(raw);
       } catch {
-        data = { error: raw };
+        data = {
+          error: raw
+        };
       }
     }
 
-    if (!response.ok) {
-      const error = new Error(
-        data?.error || `HTTP ${response.status}`
-      );
+    if (!res.ok) {
+      let msg =
+        data?.error ||
+        `HTTP ${res.status}`;
 
-      error.status = response.status;
-      throw error;
+      if (
+        typeof msg === 'string' &&
+        msg
+          .trim()
+          .toLowerCase()
+          .startsWith('<!doctype html')
+      ) {
+        msg =
+          `Server error (${res.status}). Backend deployment-ээ шалгана уу.`;
+      }
+
+      const err =
+        new Error(msg);
+
+      err.status =
+        res.status;
+
+      throw err;
     }
 
     return data;
   }
 
   function openModal(id) {
-    const modal = $(id);
+    const el = $(id);
 
-    if (!modal) return;
+    if (!el) {
+      return;
+    }
 
-    modal.classList.add('open', 'active');
+    el.classList.add(
+      'open',
+      'active'
+    );
 
-    modal.style.display = 'flex';
-    modal.style.alignItems = 'center';
-    modal.style.justifyContent = 'center';
+    el.style.display =
+      'flex';
 
-    document.body.style.overflow = 'hidden';
+    el.style.alignItems =
+      'center';
+
+    el.style.justifyContent =
+      'center';
+
+    document.body.style.overflow =
+      'hidden';
   }
 
   function closeModal(modalOrId) {
-    const modal =
+    const el =
       typeof modalOrId === 'string'
         ? $(modalOrId)
         : modalOrId;
 
-    if (!modal) return;
+    if (!el) {
+      return;
+    }
 
-    modal.classList.remove('open', 'active');
+    el.classList.remove(
+      'open',
+      'active'
+    );
 
-    modal.style.display = 'none';
-    modal.style.alignItems = '';
-    modal.style.justifyContent = '';
+    el.style.display =
+      'none';
 
-    if (modal.id === 'playerModal') {
-      const video = $('video');
+    el.style.alignItems =
+      '';
+
+    el.style.justifyContent =
+      '';
+
+    if (
+      el.id ===
+      'playerModal'
+    ) {
+      const video =
+        $('video');
 
       if (video) {
         video.pause();
-        video.removeAttribute('src');
+
+        video.removeAttribute(
+          'src'
+        );
+
         video.load();
       }
     }
 
+    if (
+      el.id ===
+      'adminModal'
+    ) {
+      clearInterval(
+        adminRefreshTimer
+      );
+
+      adminRefreshTimer =
+        null;
+    }
+
     const anyOpen =
-      [...document.querySelectorAll('.modal')]
+      [
+        ...document.querySelectorAll(
+          '.modal'
+        )
+      ]
         .some(
-          m => m.style.display === 'flex'
+          x =>
+            x.style.display ===
+            'flex'
         );
 
     if (!anyOpen) {
-      document.body.style.overflow = '';
+      document.body.style.overflow =
+        '';
     }
   }
 
   function closeAllModals() {
     document
-      .querySelectorAll('.modal')
+      .querySelectorAll(
+        '.modal'
+      )
       .forEach(
-        modal => closeModal(modal)
+        closeModal
       );
   }
 
-  function setButtonBusy(
-    button,
-    busy,
-    busyText = 'Түр хүлээнэ үү...'
+  function busy(
+    btn,
+    yes,
+    text = 'Түр хүлээнэ үү...'
   ) {
-    if (!button) return;
+    if (!btn) {
+      return;
+    }
 
-    if (busy) {
-      button.dataset.oldText =
-        button.textContent;
+    if (yes) {
+      if (
+        !btn.dataset.oldText
+      ) {
+        btn.dataset.oldText =
+          btn.textContent;
+      }
 
-      button.disabled = true;
-      button.textContent = busyText;
+      btn.disabled =
+        true;
+
+      btn.textContent =
+        text;
+
     } else {
-      button.disabled = false;
+      btn.disabled =
+        false;
 
-      if (button.dataset.oldText) {
-        button.textContent =
-          button.dataset.oldText;
+      if (
+        btn.dataset.oldText
+      ) {
+        btn.textContent =
+          btn.dataset.oldText;
 
-        delete button.dataset.oldText;
+        delete btn.dataset.oldText;
       }
     }
   }
 
-  function showMessage(
+  function message(
     el,
     text,
-    isError = false
+    error = false
   ) {
-    if (!el) return;
-
-    el.textContent = text || '';
-
-    el.style.color =
-      isError
-        ? '#ff6b6b'
-        : '';
-  }
-
-  function requireLogin() {
-    if (state.user) {
-      return true;
+    if (!el) {
+      return;
     }
 
-    closeAllModals();
+    el.textContent =
+      text || '';
 
-    setAuthMode('login');
-    openModal('authModal');
-
-    return false;
+    el.style.color =
+      error
+        ? '#ff6b6b'
+        : '';
   }
 
   function setAuthMode(mode) {
@@ -181,19 +254,23 @@
         ? 'register'
         : 'login';
 
+    const isRegister =
+      state.authMode ===
+      'register';
+
     document
-      .querySelectorAll('[data-tab]')
+      .querySelectorAll(
+        '[data-tab]'
+      )
       .forEach(
         btn => {
           btn.classList.toggle(
             'active',
-            btn.dataset.tab === state.authMode
+            btn.dataset.tab ===
+              state.authMode
           );
         }
       );
-
-    const isRegister =
-      state.authMode === 'register';
 
     $('nameLabel')
       ?.classList
@@ -202,72 +279,100 @@
         !isRegister
       );
 
-    if ($('nameInput')) {
+    if (
+      $('nameInput')
+    ) {
       $('nameInput').required =
         isRegister;
     }
 
-    if ($('authTitle')) {
+    if (
+      $('authTitle')
+    ) {
       $('authTitle').textContent =
         isRegister
           ? 'Бүртгүүлэх'
           : 'Нэвтрэх';
     }
 
-    if ($('authSubmit')) {
+    if (
+      $('authSubmit')
+    ) {
       $('authSubmit').textContent =
         isRegister
           ? 'Бүртгүүлэх'
           : 'Нэвтрэх';
     }
 
-    showMessage(
+    message(
       $('authError'),
       ''
     );
   }
 
+  function requireLogin() {
+    if (
+      state.user
+    ) {
+      return true;
+    }
+
+    closeAllModals();
+
+    setAuthMode(
+      'login'
+    );
+
+    openModal(
+      'authModal'
+    );
+
+    return false;
+  }
+
   function updateAccountUI() {
-    const adminBtn =
-      $('adminBtn');
-
-    const authBtn =
-      $('authBtn');
-
-    const accountLine =
-      $('accountLine');
-
     const isAdmin =
-      state.user?.role === 'admin';
+      state.user?.role ===
+      'admin';
 
-    adminBtn
+    $('adminBtn')
       ?.classList
       .toggle(
         'hidden',
         !isAdmin
       );
 
-    if (!state.user) {
-      if (authBtn) {
-        authBtn.textContent =
+    if (
+      !state.user
+    ) {
+      if (
+        $('authBtn')
+      ) {
+        $('authBtn').textContent =
           'Нэвтрэх';
       }
 
-      if (accountLine) {
-        accountLine.textContent =
+      if (
+        $('accountLine')
+      ) {
+        $('accountLine').textContent =
           'Нэвтрээгүй';
       }
 
       return;
     }
 
-    if (authBtn) {
-      authBtn.textContent =
+    if (
+      $('authBtn')
+    ) {
+      $('authBtn').textContent =
         state.user.name ||
         state.user.email;
     }
 
-    if (accountLine) {
+    if (
+      $('accountLine')
+    ) {
       let text =
         state.user.name ||
         state.user.email;
@@ -276,30 +381,33 @@
         state.subscriptionExpiresAt &&
         Number(
           state.subscriptionExpiresAt
-        ) > Date.now()
+        ) >
+        Date.now()
       ) {
-        const d =
-          new Date(
+        text +=
+          ` • Premium ${new Date(
             Number(
               state.subscriptionExpiresAt
             )
-          );
-
-        text +=
-          ` • Premium ${d.toLocaleDateString('mn-MN')} хүртэл`;
+          ).toLocaleDateString(
+            'mn-MN'
+          )} хүртэл`;
       }
 
-      accountLine.textContent =
+      $('accountLine').textContent =
         text;
     }
   }
 
   async function refreshSession() {
     const data =
-      await api('/api/me');
+      await api(
+        '/api/me'
+      );
 
     state.user =
-      data.user || null;
+      data.user ||
+      null;
 
     state.subscriptionExpiresAt =
       data.subscription_expires_at ||
@@ -308,24 +416,24 @@
     updateAccountUI();
   }
 
-  async function handleAuthSubmit(event) {
-    event.preventDefault();
+  async function handleAuthSubmit(e) {
+    e.preventDefault();
 
-    const button =
+    const btn =
       $('authSubmit');
 
-    setButtonBusy(
-      button,
+    busy(
+      btn,
       true
     );
 
-    showMessage(
+    message(
       $('authError'),
       ''
     );
 
     try {
-      const payload = {
+      const body = {
         email:
           $('emailInput')
             ?.value
@@ -341,23 +449,27 @@
         state.authMode ===
         'register'
       ) {
-        payload.name =
+        body.name =
           $('nameInput')
             ?.value
             .trim();
       }
 
       await api(
-        state.authMode === 'register'
+        state.authMode ===
+        'register'
           ? '/api/register'
           : '/api/login',
         {
-          method: 'POST',
-          body: payload
+          method:
+            'POST',
+
+          body
         }
       );
 
       await refreshSession();
+
       await loadMovies();
 
       closeModal(
@@ -371,16 +483,17 @@
         'login'
       );
 
-    } catch (error) {
-      showMessage(
+    } catch (err) {
+      message(
         $('authError'),
-        error.message ||
+        err.message ||
         'Алдаа гарлаа.',
         true
       );
+
     } finally {
-      setButtonBusy(
-        button,
+      busy(
+        btn,
         false
       );
     }
@@ -391,15 +504,23 @@
       await api(
         '/api/logout',
         {
-          method: 'POST'
+          method:
+            'POST'
         }
       );
     } catch {}
 
-    state.user = null;
-    state.subscriptionExpiresAt = null;
-    state.selectedMovie = null;
-    state.currentPurchase = null;
+    state.user =
+      null;
+
+    state.subscriptionExpiresAt =
+      null;
+
+    state.selectedMovie =
+      null;
+
+    state.currentPurchase =
+      null;
 
     updateAccountUI();
 
@@ -420,6 +541,7 @@
         : [];
 
     renderMovies();
+
     renderAdminMovies();
   }
 
@@ -430,31 +552,33 @@
     const empty =
       $('emptyState');
 
-    if (!grid) return;
+    if (!grid) {
+      return;
+    }
 
-    const query =
+    const q =
       ($('search')?.value || '')
         .trim()
         .toLowerCase();
 
-    const movies =
+    const list =
       state.movies.filter(
-        movie => {
-          if (!query) {
+        m => {
+          if (!q) {
             return true;
           }
 
           return [
-            movie.title,
-            movie.genre,
-            movie.description
+            m.title,
+            m.genre,
+            m.description
           ]
             .filter(Boolean)
             .some(
-              value =>
-                String(value)
+              v =>
+                String(v)
                   .toLowerCase()
-                  .includes(query)
+                  .includes(q)
             );
         }
       );
@@ -463,72 +587,71 @@
       ?.classList
       .toggle(
         'hidden',
-        movies.length > 0
+        list.length > 0
       );
 
     grid.innerHTML =
-      movies
+      list
         .map(
-          movie => {
-            const poster =
-              movie.poster_url
-                ? `
-                  <img
-                    src="${escapeHtml(movie.poster_url)}"
-                    alt="${escapeHtml(movie.title)}"
-                    loading="lazy"
-                  >
-                `
-                : `
-                  <div class="moviePosterFallback">
-                    MOOD
-                  </div>
-                `;
+          m => `
+            <article
+              class="movieCard"
+              data-movie-id="${m.id}"
+            >
 
-            const status =
-              movie.unlocked
-                ? `
-                  <span class="movieAccess unlocked">
-                    НЭЭЛТТЭЙ
-                  </span>
-                `
-                : `
-                  <span class="movieAccess locked">
-                    3,000₮
-                  </span>
-                `;
+              <div class="moviePosterWrap">
 
-            return `
-              <article
-                class="movieCard"
-                data-movie-id="${movie.id}"
-              >
+                ${
+                  m.poster_url
+                    ? `
+                      <img
+                        src="${esc(m.poster_url)}"
+                        alt="${esc(m.title)}"
+                        loading="lazy"
+                      >
+                    `
+                    : `
+                      <div class="moviePosterFallback">
+                        MOOD
+                      </div>
+                    `
+                }
 
-                <div class="moviePosterWrap">
-                  ${poster}
-                  ${status}
-                </div>
+                <span
+                  class="movieAccess ${
+                    m.unlocked
+                      ? 'unlocked'
+                      : 'locked'
+                  }"
+                >
+                  ${
+                    m.unlocked
+                      ? 'НЭЭЛТТЭЙ'
+                      : '3,000₮'
+                  }
+                </span>
 
-                <div class="movieMeta">
+              </div>
 
-                  <span class="eyebrow">
-                    ${escapeHtml(movie.genre || 'DRAMA')}
-                  </span>
+              <div class="movieMeta">
 
-                  <h3>
-                    ${escapeHtml(movie.title || '')}
-                  </h3>
+                <span class="eyebrow">
+                  ${esc(m.genre || 'DRAMA')}
+                </span>
 
-                  <p>
-                    ${Number(movie.duration_minutes || 0)}
-                    мин • 720p
-                  </p>
+                <h3>
+                  ${esc(m.title || '')}
+                </h3>
 
-                </div>
+                <p>
+                  ${Number(m.duration_minutes || 0)}
+                  мин • 720p
+                </p>
 
-              </article>
-            `;
-          }
+              </div>
+
+            </article>
+          `
         )
         .join('');
 
@@ -541,61 +664,70 @@
           card.addEventListener(
             'click',
             () => {
-              const id =
+              openMovieDetail(
                 Number(
                   card.dataset.movieId
-                );
-
-              openMovieDetail(id);
+                )
+              );
             }
           );
         }
       );
   }
 
-  function openMovieDetail(movieId) {
-    const movie =
+  function openMovieDetail(id) {
+    const m =
       state.movies.find(
-        m =>
-          Number(m.id) ===
-          Number(movieId)
+        x =>
+          Number(x.id) ===
+          Number(id)
       );
 
-    if (!movie) return;
+    if (!m) {
+      return;
+    }
 
     state.selectedMovie =
-      movie;
+      m;
 
-    if ($('detailPoster')) {
+    if (
+      $('detailPoster')
+    ) {
       $('detailPoster').src =
-        movie.poster_url ||
+        m.poster_url ||
         '';
 
       $('detailPoster').alt =
-        movie.title ||
+        m.title ||
         '';
 
       $('detailPoster').style.display =
-        movie.poster_url
+        m.poster_url
           ? ''
           : 'none';
     }
 
-    if ($('detailGenre')) {
+    if (
+      $('detailGenre')
+    ) {
       $('detailGenre').textContent =
-        movie.genre ||
+        m.genre ||
         'DRAMA';
     }
 
-    if ($('detailTitle')) {
+    if (
+      $('detailTitle')
+    ) {
       $('detailTitle').textContent =
-        movie.title ||
+        m.title ||
         '';
     }
 
-    if ($('detailDesc')) {
+    if (
+      $('detailDesc')
+    ) {
       $('detailDesc').textContent =
-        movie.description ||
+        m.description ||
         'Тайлбар оруулаагүй байна.';
     }
 
@@ -604,20 +736,18 @@
         '#detailModal .priceRow'
       );
 
-    if (priceRow) {
-      priceRow
-        .classList
-        .toggle(
-          'hidden',
-          !!movie.unlocked
-        );
-    }
+    priceRow
+      ?.classList
+      .toggle(
+        'hidden',
+        !!m.unlocked
+      );
 
     $('playBtn')
       ?.classList
       .toggle(
         'hidden',
-        !movie.unlocked
+        !m.unlocked
       );
 
     openModal(
@@ -626,7 +756,9 @@
   }
 
   async function startPurchase(type) {
-    if (!requireLogin()) {
+    if (
+      !requireLogin()
+    ) {
       return;
     }
 
@@ -642,7 +774,8 @@
     }
 
     const body =
-      type === 'subscription'
+      type ===
+      'subscription'
         ? {
             type:
               'subscription'
@@ -670,32 +803,43 @@
       state.currentPurchase =
         data.purchase;
 
-      if ($('payTitle')) {
+      if (
+        $('payTitle')
+      ) {
         $('payTitle').textContent =
-          type === 'subscription'
+          type ===
+          'subscription'
             ? '30 хоногийн эрх • 5,000₮'
             : `${state.selectedMovie?.title || 'Кино'} • 3,000₮`;
       }
 
-      if ($('bankName')) {
+      if (
+        $('bankName')
+      ) {
         $('bankName').textContent =
           data.payment?.bank_name ||
           '';
       }
 
-      if ($('bankAccount')) {
+      if (
+        $('bankAccount')
+      ) {
         $('bankAccount').textContent =
           data.payment?.account_number ||
           '';
       }
 
-      if ($('bankOwner')) {
+      if (
+        $('bankOwner')
+      ) {
         $('bankOwner').textContent =
           data.payment?.account_name ||
           '';
       }
 
-      if ($('payRef')) {
+      if (
+        $('payRef')
+      ) {
         $('payRef').textContent =
           data.purchase?.reference_code ||
           '';
@@ -704,14 +848,32 @@
       const confirmBtn =
         $('confirmPaymentBtn');
 
-      const statusEl =
-        $('paymentStatus');
+      /*
+        ЧУХАЛ:
+
+        status = pending
+        гэдэг нь шууд Admin-д очсон гэсэн үг БИШ.
+
+        confirmed = true
+        эсвэл
+        approved_at = -1
+
+        болсон үед л Admin-д очсон.
+      */
+
+      const sentToAdmin =
+        data.purchase?.confirmed ===
+          true ||
+        Number(
+          data.purchase?.approved_at
+        ) === -1;
 
       if (
-        data.purchase?.status ===
-        'pending'
+        sentToAdmin
       ) {
-        if (confirmBtn) {
+        if (
+          confirmBtn
+        ) {
           confirmBtn.disabled =
             true;
 
@@ -719,13 +881,15 @@
             'Төлбөр шалгагдаж байна';
         }
 
-        showMessage(
-          statusEl,
-          'Таны төлбөрийн мэдэгдэл админд очсон байна.'
+        message(
+          $('paymentStatus'),
+          '✓ Төлбөрийн мэдэгдэл админд очсон байна.'
         );
 
       } else {
-        if (confirmBtn) {
+        if (
+          confirmBtn
+        ) {
           confirmBtn.disabled =
             false;
 
@@ -733,8 +897,8 @@
             'Би төлбөрөө шилжүүлсэн';
         }
 
-        showMessage(
-          statusEl,
+        message(
+          $('paymentStatus'),
           'Шилжүүлсний дараа дээрх товчийг дарна уу.'
         );
       }
@@ -743,11 +907,13 @@
         'paymentModal'
       );
 
-    } catch (error) {
+    } catch (err) {
       if (
-        error.status === 401
+        err.status ===
+        401
       ) {
-        state.user = null;
+        state.user =
+          null;
 
         updateAccountUI();
 
@@ -765,17 +931,19 @@
       }
 
       alert(
-        error.message ||
+        err.message ||
         'Төлбөрийн хүсэлт үүсгэж чадсангүй.'
       );
     }
   }
 
   async function confirmPayment() {
-    const purchase =
+    const p =
       state.currentPurchase;
 
-    if (!purchase?.id) {
+    if (
+      !p?.id
+    ) {
       alert(
         'Төлбөрийн хүсэлт олдсонгүй.'
       );
@@ -783,71 +951,84 @@
       return;
     }
 
-    const button =
+    const btn =
       $('confirmPaymentBtn');
 
-    setButtonBusy(
-      button,
+    busy(
+      btn,
       true,
       'Илгээж байна...'
     );
 
     try {
-      await api(
-        `/api/purchases/${purchase.id}/confirm`,
-        {
-          method:
-            'POST'
-        }
-      );
+      const data =
+        await api(
+          `/api/purchases/${p.id}/confirm`,
+          {
+            method:
+              'POST'
+          }
+        );
 
       state.currentPurchase.status =
         'pending';
 
-      if (button) {
-        button.disabled =
+      state.currentPurchase.confirmed =
+        true;
+
+      state.currentPurchase.approved_at =
+        -1;
+
+      if (
+        btn
+      ) {
+        btn.disabled =
           true;
 
-        button.textContent =
+        btn.textContent =
           'Төлбөр шалгагдаж байна';
 
-        delete button.dataset.oldText;
+        delete btn.dataset.oldText;
       }
 
-      showMessage(
+      message(
         $('paymentStatus'),
-        '✓ Төлбөрийн мэдэгдэл админд амжилттай очлоо. Баталгаажмагц эрх нээгдэнэ.'
+        '✓ Админд амжилттай илгээлээ. Баталгаажмагц эрх нээгдэнэ.'
       );
 
-    } catch (error) {
-      showMessage(
+      console.log(
+        'Payment confirmed:',
+        data
+      );
+
+    } catch (err) {
+      message(
         $('paymentStatus'),
-        error.message ||
+        err.message ||
         'Мэдэгдэл илгээж чадсангүй.',
         true
       );
 
-      setButtonBusy(
-        button,
+      busy(
+        btn,
         false
       );
     }
   }
 
   async function playSelectedMovie() {
-    if (!requireLogin()) {
+    if (
+      !requireLogin() ||
+      !state.selectedMovie
+    ) {
       return;
     }
 
-    if (!state.selectedMovie) {
-      return;
-    }
-
-    const button =
+    const btn =
       $('playBtn');
 
-    setButtonBusy(
-      button,
+    busy(
+      btn,
       true,
       'Уншиж байна...'
     );
@@ -870,7 +1051,9 @@
 
       video.load();
 
-      if ($('playerTitle')) {
+      if (
+        $('playerTitle')
+      ) {
         $('playerTitle').textContent =
           state.selectedMovie.title ||
           '';
@@ -886,35 +1069,29 @@
           () => {}
         );
 
-    } catch (error) {
-      if (
-        error.status === 403
-      ) {
-        alert(
-          'Энэ киног үзэх эрх одоогоор нээгдээгүй байна.'
-        );
-      } else {
-        alert(
-          error.message ||
-          'Видео нээж чадсангүй.'
-        );
-      }
+    } catch (err) {
+      alert(
+        err.message ||
+        'Видео нээж чадсангүй.'
+      );
 
     } finally {
-      setButtonBusy(
-        button,
+      busy(
+        btn,
         false
       );
     }
   }
 
-  function updateProgress(
+  function progress(
     bar,
     textEl,
     percent,
     text
   ) {
-    if (bar) {
+    if (
+      bar
+    ) {
       bar.style.width =
         `${Math.max(
           0,
@@ -925,7 +1102,9 @@
         )}%`;
     }
 
-    if (textEl) {
+    if (
+      textEl
+    ) {
       textEl.textContent =
         text ||
         '';
@@ -937,10 +1116,6 @@
     file,
     onProgress
   ) {
-    if (!file) {
-      return null;
-    }
-
     const signed =
       await api(
         '/api/admin/upload-url',
@@ -958,7 +1133,10 @@
       );
 
     await new Promise(
-      (resolve, reject) => {
+      (
+        resolve,
+        reject
+      ) => {
         const xhr =
           new XMLHttpRequest();
 
@@ -968,7 +1146,9 @@
           true
         );
 
-        if (file.type) {
+        if (
+          file.type
+        ) {
           xhr.setRequestHeader(
             'Content-Type',
             file.type
@@ -976,16 +1156,17 @@
         }
 
         xhr.upload.onprogress =
-          event => {
+          e => {
             if (
-              event.lengthComputable &&
-              typeof onProgress ===
-                'function'
+              e.lengthComputable &&
+              onProgress
             ) {
               onProgress(
                 Math.round(
-                  event.loaded /
-                  event.total *
+                  (
+                    e.loaded /
+                    e.total
+                  ) *
                   100
                 )
               );
@@ -995,10 +1176,13 @@
         xhr.onload =
           () => {
             if (
-              xhr.status >= 200 &&
-              xhr.status < 300
+              xhr.status >=
+                200 &&
+              xhr.status <
+                300
             ) {
               resolve();
+
             } else {
               reject(
                 new Error(
@@ -1009,23 +1193,24 @@
           };
 
         xhr.onerror =
-          () => {
+          () =>
             reject(
               new Error(
                 'Upload хийх үед сүлжээний алдаа гарлаа.'
               )
             );
-          };
 
-        xhr.send(file);
+        xhr.send(
+          file
+        );
       }
     );
 
     return signed.key;
   }
 
-  async function handleMovieCreate(event) {
-    event.preventDefault();
+  async function handleMovieCreate(e) {
+    e.preventDefault();
 
     if (
       state.user?.role !==
@@ -1041,10 +1226,11 @@
     const form =
       $('movieForm');
 
-    const submit =
-      form?.querySelector(
-        'button[type="submit"]'
-      );
+    const btn =
+      form
+        ?.querySelector(
+          'button[type="submit"]'
+        );
 
     const bar =
       $('uploadBar');
@@ -1052,15 +1238,17 @@
     const textEl =
       $('uploadText');
 
-    const videoFile =
-      $('videoFile')
-        ?.files?.[0];
-
-    const posterFile =
+    const poster =
       $('posterFile')
         ?.files?.[0];
 
-    if (!videoFile) {
+    const video =
+      $('videoFile')
+        ?.files?.[0];
+
+    if (
+      !video
+    ) {
       alert(
         'MP4 видеогоо сонгоно уу.'
       );
@@ -1068,8 +1256,8 @@
       return;
     }
 
-    setButtonBusy(
-      submit,
+    busy(
+      btn,
       true,
       'Upload хийж байна...'
     );
@@ -1078,54 +1266,37 @@
       let posterKey =
         null;
 
-      if (posterFile) {
-        updateProgress(
-          bar,
-          textEl,
-          0,
-          'Poster upload...'
-        );
-
+      if (
+        poster
+      ) {
         posterKey =
           await uploadFile(
             'poster',
-            posterFile,
-            p =>
-              updateProgress(
+            poster,
+            p => {
+              progress(
                 bar,
                 textEl,
                 p,
                 `Poster ${p}%`
-              )
+              );
+            }
           );
       }
-
-      updateProgress(
-        bar,
-        textEl,
-        0,
-        'Видео upload...'
-      );
 
       const videoKey =
         await uploadFile(
           'video',
-          videoFile,
-          p =>
-            updateProgress(
+          video,
+          p => {
+            progress(
               bar,
               textEl,
               p,
               `Видео ${p}%`
-            )
+            );
+          }
         );
-
-      updateProgress(
-        bar,
-        textEl,
-        100,
-        'Кино үүсгэж байна...'
-      );
 
       await api(
         '/api/admin/movies',
@@ -1166,19 +1337,24 @@
         }
       );
 
-      form?.reset();
+      form
+        ?.reset();
 
-      if ($('mGenre')) {
+      if (
+        $('mGenre')
+      ) {
         $('mGenre').value =
           'drama';
       }
 
-      if ($('mDuration')) {
+      if (
+        $('mDuration')
+      ) {
         $('mDuration').value =
           '90';
       }
 
-      updateProgress(
+      progress(
         bar,
         textEl,
         100,
@@ -1187,27 +1363,27 @@
 
       await loadMovies();
 
-    } catch (error) {
-      updateProgress(
+    } catch (err) {
+      progress(
         bar,
         textEl,
         0,
-        `Алдаа: ${error.message}`
+        `Алдаа: ${err.message}`
       );
 
     } finally {
-      setButtonBusy(
-        submit,
+      busy(
+        btn,
         false
       );
     }
   }
 
   function renderAdminMovies() {
-    const container =
+    const box =
       $('adminMovies');
 
-    if (!container) {
+    if (!box) {
       return;
     }
 
@@ -1215,7 +1391,7 @@
       state.user?.role !==
       'admin'
     ) {
-      container.innerHTML =
+      box.innerHTML =
         '';
 
       return;
@@ -1224,31 +1400,28 @@
     if (
       !state.movies.length
     ) {
-      container.innerHTML =
+      box.innerHTML =
         '<p class="muted">Кино алга байна.</p>';
 
       return;
     }
 
-    container.innerHTML =
+    box.innerHTML =
       state.movies
         .map(
-          movie => `
-            <div
-              class="adminMovieRow"
-              data-admin-movie="${movie.id}"
-            >
+          m => `
+            <div class="adminMovieRow">
 
               <div class="adminMovieInfo">
 
                 <b>
-                  ${escapeHtml(movie.title || '')}
+                  ${esc(m.title || '')}
                 </b>
 
                 <span>
-                  ${escapeHtml(movie.genre || 'drama')}
+                  ${esc(m.genre || 'drama')}
                   •
-                  ${Number(movie.duration_minutes || 0)}
+                  ${Number(m.duration_minutes || 0)}
                   мин
                 </span>
 
@@ -1259,7 +1432,7 @@
                 <button
                   class="btn glass adminEditMovie"
                   type="button"
-                  data-id="${movie.id}"
+                  data-id="${m.id}"
                 >
                   ✏️ Засах
                 </button>
@@ -1267,7 +1440,7 @@
                 <button
                   class="btn glass adminDeleteMovie"
                   type="button"
-                  data-id="${movie.id}"
+                  data-id="${m.id}"
                 >
                   🗑️ Устгах
                 </button>
@@ -1279,98 +1452,86 @@
         )
         .join('');
 
-    container
+    box
       .querySelectorAll(
         '.adminEditMovie'
       )
       .forEach(
-        button => {
-          button.addEventListener(
+        btn => {
+          btn.addEventListener(
             'click',
-            () =>
+            () => {
               openEditMovie(
                 Number(
-                  button.dataset.id
+                  btn.dataset.id
                 )
-              )
+              );
+            }
           );
         }
       );
 
-    container
+    box
       .querySelectorAll(
         '.adminDeleteMovie'
       )
       .forEach(
-        button => {
-          button.addEventListener(
+        btn => {
+          btn.addEventListener(
             'click',
-            () =>
+            () => {
               deleteMovie(
                 Number(
-                  button.dataset.id
+                  btn.dataset.id
                 )
-              )
+              );
+            }
           );
         }
       );
   }
 
-  function openEditMovie(movieId) {
-    const movie =
+  function openEditMovie(id) {
+    const m =
       state.movies.find(
-        m =>
-          Number(m.id) ===
-          Number(movieId)
+        x =>
+          Number(x.id) ===
+          Number(id)
       );
 
-    if (!movie) {
+    if (!m) {
       return;
     }
 
     state.editingMovie =
-      movie;
+      m;
 
-    if ($('editMovieId')) {
-      $('editMovieId').value =
-        movie.id;
-    }
+    $('editMovieId').value =
+      m.id;
 
-    if ($('editTitle')) {
-      $('editTitle').value =
-        movie.title ||
-        '';
-    }
+    $('editTitle').value =
+      m.title ||
+      '';
 
-    if ($('editGenre')) {
-      $('editGenre').value =
-        movie.genre ||
-        '';
-    }
+    $('editGenre').value =
+      m.genre ||
+      '';
 
-    if ($('editDesc')) {
-      $('editDesc').value =
-        movie.description ||
-        '';
-    }
+    $('editDesc').value =
+      m.description ||
+      '';
 
-    if ($('editDuration')) {
-      $('editDuration').value =
-        movie.duration_minutes ||
-        90;
-    }
+    $('editDuration').value =
+      m.duration_minutes ||
+      90;
 
-    if ($('editPosterFile')) {
-      $('editPosterFile').value =
-        '';
-    }
+    $('editPosterFile').value =
+      '';
 
-    if ($('editVideoFile')) {
-      $('editVideoFile').value =
-        '';
-    }
+    $('editVideoFile').value =
+      '';
 
-    updateProgress(
+    progress(
       $('editUploadBar'),
       $('editUploadText'),
       0,
@@ -1386,21 +1547,10 @@
     );
   }
 
-  async function handleMovieEdit(event) {
-    event.preventDefault();
+  async function handleMovieEdit(e) {
+    e.preventDefault();
 
-    if (
-      state.user?.role !==
-      'admin'
-    ) {
-      alert(
-        'Admin эрх шаардлагатай.'
-      );
-
-      return;
-    }
-
-    const movieId =
+    const id =
       Number(
         $('editMovieId')
           ?.value ||
@@ -1408,16 +1558,15 @@
           ?.id
       );
 
-    if (!movieId) {
-      alert(
-        'Кино олдсонгүй.'
-      );
-
+    if (!id) {
       return;
     }
 
-    const submit =
-      $('editMovieForm')
+    const form =
+      $('editMovieForm');
+
+    const btn =
+      form
         ?.querySelector(
           'button[type="submit"]'
         );
@@ -1428,8 +1577,8 @@
     const textEl =
       $('editUploadText');
 
-    setButtonBusy(
-      submit,
+    busy(
+      btn,
       true,
       'Хадгалж байна...'
     );
@@ -1460,67 +1609,52 @@
           )
       };
 
-      const posterFile =
+      const poster =
         $('editPosterFile')
           ?.files?.[0];
 
-      const videoFile =
+      const video =
         $('editVideoFile')
           ?.files?.[0];
 
-      if (posterFile) {
-        updateProgress(
-          bar,
-          textEl,
-          0,
-          'Шинэ poster upload...'
-        );
-
+      if (
+        poster
+      ) {
         body.poster_key =
           await uploadFile(
             'poster',
-            posterFile,
-            p =>
-              updateProgress(
+            poster,
+            p => {
+              progress(
                 bar,
                 textEl,
                 p,
                 `Poster ${p}%`
-              )
+              );
+            }
           );
       }
 
-      if (videoFile) {
-        updateProgress(
-          bar,
-          textEl,
-          0,
-          'Шинэ видео upload...'
-        );
-
+      if (
+        video
+      ) {
         body.video_key =
           await uploadFile(
             'video',
-            videoFile,
-            p =>
-              updateProgress(
+            video,
+            p => {
+              progress(
                 bar,
                 textEl,
                 p,
                 `Видео ${p}%`
-              )
+              );
+            }
           );
       }
 
-      updateProgress(
-        bar,
-        textEl,
-        100,
-        'Өөрчлөлт хадгалж байна...'
-      );
-
       await api(
-        `/api/admin/movies/${movieId}`,
+        `/api/admin/movies/${id}`,
         {
           method:
             'PUT',
@@ -1529,14 +1663,14 @@
         }
       );
 
-      await loadMovies();
-
-      updateProgress(
+      progress(
         bar,
         textEl,
         100,
         '✓ Амжилттай хадгаллаа.'
       );
+
+      await loadMovies();
 
       setTimeout(
         () => {
@@ -1544,56 +1678,48 @@
             'editMovieModal'
           );
         },
-        500
+        400
       );
 
-    } catch (error) {
-      updateProgress(
+    } catch (err) {
+      progress(
         bar,
         textEl,
         0,
-        `Алдаа: ${error.message}`
+        `Алдаа: ${err.message}`
       );
 
     } finally {
-      setButtonBusy(
-        submit,
+      busy(
+        btn,
         false
       );
     }
   }
 
-  async function deleteMovie(movieId) {
-    if (
-      state.user?.role !==
-      'admin'
-    ) {
-      return;
-    }
-
-    const movie =
+  async function deleteMovie(id) {
+    const m =
       state.movies.find(
-        m =>
-          Number(m.id) ===
-          Number(movieId)
+        x =>
+          Number(x.id) ===
+          Number(id)
       );
 
     const name =
-      movie?.title ||
-      `#${movieId}`;
+      m?.title ||
+      `#${id}`;
 
-    const yes =
-      confirm(
-        `"${name}" киног бүр мөсөн устгах уу?\n\nВидео болон poster R2-оос мөн устна.`
-      );
-
-    if (!yes) {
+    if (
+      !confirm(
+        `"${name}" киног бүр мөсөн устгах уу?`
+      )
+    ) {
       return;
     }
 
     try {
       await api(
-        `/api/admin/movies/${movieId}`,
+        `/api/admin/movies/${id}`,
         {
           method:
             'DELETE'
@@ -1603,28 +1729,10 @@
       if (
         Number(
           state.editingMovie?.id
-        ) ===
-        Number(movieId)
+        ) === id
       ) {
-        state.editingMovie =
-          null;
-
         closeModal(
           'editMovieModal'
-        );
-      }
-
-      if (
-        Number(
-          state.selectedMovie?.id
-        ) ===
-        Number(movieId)
-      ) {
-        state.selectedMovie =
-          null;
-
-        closeModal(
-          'detailModal'
         );
       }
 
@@ -1634,27 +1742,27 @@
         'Кино устгагдлаа.'
       );
 
-    } catch (error) {
+    } catch (err) {
       alert(
-        error.message ||
+        err.message ||
         'Кино устгаж чадсангүй.'
       );
     }
   }
 
   async function loadAdminPurchases() {
-    const container =
+    const box =
       $('adminPurchases');
 
     if (
-      !container ||
+      !box ||
       state.user?.role !==
-      'admin'
+        'admin'
     ) {
       return;
     }
 
-    container.innerHTML =
+    box.innerHTML =
       '<p class="muted">Уншиж байна...</p>';
 
     try {
@@ -1663,7 +1771,7 @@
           '/api/admin/purchases'
         );
 
-      const purchases =
+      const list =
         Array.isArray(
           data.purchases
         )
@@ -1671,16 +1779,16 @@
           : [];
 
       if (
-        !purchases.length
+        !list.length
       ) {
-        container.innerHTML =
+        box.innerHTML =
           '<p class="muted">Хүлээгдэж буй төлбөр алга байна.</p>';
 
         return;
       }
 
-      container.innerHTML =
-        purchases
+      box.innerHTML =
+        list
           .map(
             p => `
               <div class="purchaseRow">
@@ -1688,7 +1796,7 @@
                 <div class="purchaseInfo">
 
                   <b>
-                    ${escapeHtml(
+                    ${esc(
                       p.name ||
                       p.email ||
                       'Хэрэглэгч'
@@ -1696,7 +1804,7 @@
                   </b>
 
                   <span>
-                    ${escapeHtml(p.email || '')}
+                    ${esc(p.email || '')}
                   </span>
 
                   <span>
@@ -1704,7 +1812,7 @@
                       p.type ===
                       'subscription'
                         ? '30 хоногийн эрх'
-                        : escapeHtml(
+                        : esc(
                             p.movie_title ||
                             `Кино #${p.movie_id}`
                           )
@@ -1715,7 +1823,7 @@
                     ${money(p.amount)}
                     • Утга:
                     <strong>
-                      ${escapeHtml(p.reference_code || '')}
+                      ${esc(p.reference_code || '')}
                     </strong>
                   </span>
 
@@ -1746,59 +1854,62 @@
           )
           .join('');
 
-      container
+      box
         .querySelectorAll(
           '.approvePurchase'
         )
         .forEach(
-          button => {
-            button.addEventListener(
+          btn => {
+            btn.addEventListener(
               'click',
-              () =>
+              () => {
                 adminPurchaseAction(
                   Number(
-                    button.dataset.id
+                    btn.dataset.id
                   ),
                   'approve',
-                  button
-                )
+                  btn
+                );
+              }
             );
           }
         );
 
-      container
+      box
         .querySelectorAll(
           '.rejectPurchase'
         )
         .forEach(
-          button => {
-            button.addEventListener(
+          btn => {
+            btn.addEventListener(
               'click',
-              () =>
+              () => {
                 adminPurchaseAction(
                   Number(
-                    button.dataset.id
+                    btn.dataset.id
                   ),
                   'reject',
-                  button
-                )
+                  btn
+                );
+              }
             );
           }
         );
 
-    } catch (error) {
-      container.innerHTML =
-        `<p class="error">${escapeHtml(error.message)}</p>`;
+    } catch (err) {
+      box.innerHTML =
+        `<p class="error">${esc(err.message)}</p>`;
     }
   }
 
   async function adminPurchaseAction(
-    purchaseId,
+    id,
     action,
-    button
+    btn
   ) {
     const label =
-      action === 'approve'
+      action ===
+      'approve'
         ? 'Батлах'
         : 'Татгалзах';
 
@@ -1810,15 +1921,15 @@
       return;
     }
 
-    setButtonBusy(
-      button,
+    busy(
+      btn,
       true,
       '...'
     );
 
     try {
       await api(
-        `/api/admin/purchases/${purchaseId}/${action}`,
+        `/api/admin/purchases/${id}/${action}`,
         {
           method:
             'POST'
@@ -1826,16 +1937,17 @@
       );
 
       await loadAdminPurchases();
+
       await loadMovies();
 
-    } catch (error) {
+    } catch (err) {
       alert(
-        error.message ||
+        err.message ||
         'Алдаа гарлаа.'
       );
 
-      setButtonBusy(
-        button,
+      busy(
+        btn,
         false
       );
     }
@@ -1862,9 +1974,31 @@
     );
 
     await loadAdminPurchases();
+
+    clearInterval(
+      adminRefreshTimer
+    );
+
+    adminRefreshTimer =
+      setInterval(
+        () => {
+          if (
+            $('adminModal')
+              ?.style
+              .display ===
+            'flex'
+          ) {
+            loadAdminPurchases()
+              .catch(
+                () => {}
+              );
+          }
+        },
+        5000
+      );
   }
 
-  function injectExtraStyles() {
+  function injectStyles() {
     const style =
       document.createElement(
         'style'
@@ -1978,7 +2112,7 @@
         margin-bottom: 8px;
       }
 
-      @media (max-width: 700px) {
+      @media (max-width:700px) {
         .adminMovieRow,
         .purchaseRow {
           align-items: stretch;
@@ -1997,23 +2131,20 @@
       }
     `;
 
-    document.head
-      .appendChild(style);
+    document.head.appendChild(
+      style
+    );
   }
 
   function bindEvents() {
     document
-      .querySelectorAll('.modal')
+      .querySelectorAll(
+        '.modal'
+      )
       .forEach(
         modal => {
           modal.style.display =
             'none';
-
-          modal.style.alignItems =
-            '';
-
-          modal.style.justifyContent =
-            '';
         }
       );
 
@@ -2026,13 +2157,10 @@
           el.addEventListener(
             'click',
             () => {
-              const modal =
+              closeModal(
                 el.closest(
                   '.modal'
-                );
-
-              closeModal(
-                modal
+                )
               );
             }
           );
@@ -2044,13 +2172,14 @@
         '[data-tab]'
       )
       .forEach(
-        button => {
-          button.addEventListener(
+        btn => {
+          btn.addEventListener(
             'click',
-            () =>
+            () => {
               setAuthMode(
-                button.dataset.tab
-              )
+                btn.dataset.tab
+              );
+            }
           );
         }
       );
@@ -2065,7 +2194,9 @@
       ?.addEventListener(
         'click',
         async () => {
-          if (!state.user) {
+          if (
+            !state.user
+          ) {
             closeAllModals();
 
             setAuthMode(
@@ -2079,12 +2210,11 @@
             return;
           }
 
-          const yes =
+          if (
             confirm(
               'Аккаунтаас гарах уу?'
-            );
-
-          if (yes) {
+            )
+          ) {
             await logout();
           }
         }
@@ -2099,37 +2229,41 @@
     $('buyMovieBtn')
       ?.addEventListener(
         'click',
-        () =>
+        () => {
           startPurchase(
             'movie'
-          )
+          );
+        }
       );
 
     $('buySubBtn')
       ?.addEventListener(
         'click',
-        () =>
+        () => {
           startPurchase(
             'subscription'
-          )
+          );
+        }
       );
 
     $('subBtn')
       ?.addEventListener(
         'click',
-        () =>
+        () => {
           startPurchase(
             'subscription'
-          )
+          );
+        }
       );
 
     $('subBtn2')
       ?.addEventListener(
         'click',
-        () =>
+        () => {
           startPurchase(
             'subscription'
-          )
+          );
+        }
       );
 
     $('confirmPaymentBtn')
@@ -2175,7 +2309,9 @@
             );
 
           if (id) {
-            deleteMovie(id);
+            deleteMovie(
+              id
+            );
           }
         }
       );
@@ -2183,36 +2319,40 @@
     document
       .addEventListener(
         'keydown',
-        event => {
+        e => {
           if (
-            event.key ===
+            e.key !==
             'Escape'
           ) {
-            const open =
-              [
-                ...document.querySelectorAll(
-                  '.modal'
-                )
-              ]
-                .reverse()
-                .find(
-                  m =>
-                    m.style.display ===
-                    'flex'
-                );
+            return;
+          }
 
-            if (open) {
-              closeModal(
-                open
+          const open =
+            [
+              ...document.querySelectorAll(
+                '.modal'
+              )
+            ]
+              .reverse()
+              .find(
+                x =>
+                  x.style.display ===
+                  'flex'
               );
-            }
+
+          if (
+            open
+          ) {
+            closeModal(
+              open
+            );
           }
         }
       );
   }
 
   async function init() {
-    injectExtraStyles();
+    injectStyles();
 
     bindEvents();
 
@@ -2222,22 +2362,25 @@
 
     try {
       await refreshSession();
-    } catch (error) {
+    } catch (err) {
       console.error(
         'Session load failed:',
-        error
+        err
       );
     }
 
     try {
       await loadMovies();
-    } catch (error) {
+
+    } catch (err) {
       console.error(
         'Movie load failed:',
-        error
+        err
       );
 
-      if ($('emptyState')) {
+      if (
+        $('emptyState')
+      ) {
         $('emptyState')
           .classList
           .remove(
@@ -2251,5 +2394,4 @@
   }
 
   init();
-
 })();
