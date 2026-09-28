@@ -1,0 +1,9 @@
+[
+  {
+    "AllowedOrigins": ["https://YOUR_PROJECT.pages.dev"],
+    "AllowedMethods": ["PUT", "GET", "HEAD"],
+    "AllowedHeaders": ["content-type"],
+    "ExposeHeaders": ["etag"],
+    "MaxAgeSeconds": 3600
+  }
+]
