@@ -1,20 +1,930 @@
-<!doctype html><html lang="mn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#07070b"><title>MOOD — Кино</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"><link rel="stylesheet" href="/style.css"></head><body>
-<header class="top"><a class="logo" href="#">M<span>OO</span>D</a><nav><a href="#movies">Кино</a><a href="#plans">Эрх</a><button id="adminBtn" class="navbtn hidden">Admin</button><button id="authBtn" class="navbtn">Нэвтрэх</button></nav></header>
+<!doctype html>
+<html lang="mn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#07070b">
+  <title>MOOD — Кино</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  >
+
+  <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+
+<header class="top">
+  <a class="logo" href="#">
+    M<span>OO</span>D
+  </a>
+
+  <nav>
+    <a href="#movies">Кино</a>
+    <a href="#plans">Эрх</a>
+
+    <button
+      id="adminBtn"
+      class="navbtn hidden"
+    >
+      Admin
+    </button>
+
+    <button
+      id="authBtn"
+      class="navbtn"
+    >
+      Нэвтрэх
+    </button>
+  </nav>
+</header>
+
+
 <main>
-<section class="hero"><div class="heroShade"></div><div class="heroCopy"><div class="kicker">MONGOL SUB • 720P</div><h1>Кино бүрийг<br><em>хаанаас ч.</em></h1><p>Нэг киног 3,000₮-өөр эсвэл бүх киног 30 хоног 5,000₮-өөр үз.</p><div class="heroActions"><a href="#movies" class="btn primary">Кино үзэх</a><button class="btn glass" id="subBtn">30 хоног • 5,000₮</button></div><div id="accountLine" class="accountLine">Нэвтрээгүй</div></div><div class="heroVisual"><div class="posterHero"><span>MOOD ORIGINAL</span><b>НУУЦ<br>ТЭРБУМТАН</b><small>ROMANCE · DRAMA</small></div></div></section>
-<section class="section" id="movies"><div class="head"><div><span class="eyebrow">КИНО САН</span><h2>Одоо үзэх</h2></div><input id="search" class="search" placeholder="Кино хайх"></div><div id="movieGrid" class="grid"></div><div id="emptyState" class="empty hidden">Одоогоор кино нэмээгүй байна.</div></section>
-<section class="section plans" id="plans"><div class="plan"><span class="eyebrow">НЭГ КИНО</span><h3>3,000₮</h3><p>Сонгосон нэг киног аккаунтаараа нээж үзнэ.</p><div>✓ 720p playback</div><div>✓ Account дээр хадгалагдана</div></div><div class="plan featured"><span class="eyebrow">PREMIUM</span><h3>5,000₮ <small>/ 30 хоног</small></h3><p>Бүх кино 30 хоногийн турш нээлттэй.</p><div>✓ Бүх кино</div><div>✓ Шинээр нэмэгдэх кинонууд</div><button class="btn primary full" id="subBtn2">30 хоногийн эрх авах</button></div></section>
+
+  <section class="hero">
+
+    <div class="heroShade"></div>
+
+    <div class="heroCopy">
+
+      <div class="kicker">
+        MONGOL DUB • 720P
+      </div>
+
+      <h1>
+        Кино бүрийг<br>
+        <em>хаанаас ч.</em>
+      </h1>
+
+      <p>
+        Нэг киног 3,000₮-өөр
+        эсвэл бүх киног
+        30 хоног 5,000₮-өөр үз.
+      </p>
+
+      <div class="heroActions">
+
+        <a
+          href="#movies"
+          class="btn primary"
+        >
+          Кино үзэх
+        </a>
+
+        <button
+          class="btn glass"
+          id="subBtn"
+        >
+          30 хоног • 5,000₮
+        </button>
+
+      </div>
+
+      <div
+        id="accountLine"
+        class="accountLine"
+      >
+        Нэвтрээгүй
+      </div>
+
+    </div>
+
+
+    <div class="heroVisual">
+
+      <div class="posterHero">
+
+        <span>
+          MOOD ORIGINAL
+        </span>
+
+        <b>
+          НУУЦ<br>
+          ТЭРБУМТАН
+        </b>
+
+        <small>
+          ROMANCE · DRAMA
+        </small>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <section
+    class="section"
+    id="movies"
+  >
+
+    <div class="head">
+
+      <div>
+        <span class="eyebrow">
+          КИНО САН
+        </span>
+
+        <h2>
+          Одоо үзэх
+        </h2>
+      </div>
+
+      <input
+        id="search"
+        class="search"
+        placeholder="Кино хайх"
+      >
+
+    </div>
+
+    <div
+      id="movieGrid"
+      class="grid"
+    ></div>
+
+    <div
+      id="emptyState"
+      class="empty hidden"
+    >
+      Одоогоор кино нэмээгүй байна.
+    </div>
+
+  </section>
+
+
+  <section
+    class="section plans"
+    id="plans"
+  >
+
+    <div class="plan">
+
+      <span class="eyebrow">
+        НЭГ КИНО
+      </span>
+
+      <h3>
+        3,000₮
+      </h3>
+
+      <p>
+        Сонгосон нэг киног
+        аккаунтаараа нээж үзнэ.
+      </p>
+
+      <div>
+        ✓ 720p playback
+      </div>
+
+      <div>
+        ✓ Account дээр хадгалагдана
+      </div>
+
+    </div>
+
+
+    <div class="plan featured">
+
+      <span class="eyebrow">
+        PREMIUM
+      </span>
+
+      <h3>
+        5,000₮
+        <small>
+          / 30 хоног
+        </small>
+      </h3>
+
+      <p>
+        Бүх кино 30 хоногийн
+        турш нээлттэй.
+      </p>
+
+      <div>
+        ✓ Бүх кино
+      </div>
+
+      <div>
+        ✓ Шинээр нэмэгдэх кинонууд
+      </div>
+
+      <button
+        class="btn primary full"
+        id="subBtn2"
+      >
+        30 хоногийн эрх авах
+      </button>
+
+    </div>
+
+  </section>
+
 </main>
-<footer><a class="logo" href="#">M<span>OO</span>D</a><p>Зөвхөн өөрийн эсвэл түгээх эрхтэй контент байршуулна.</p></footer>
 
-<div class="modal" id="authModal"><div class="backdrop" data-close></div><div class="card"><button class="x" data-close>×</button><div class="tabs"><button class="tab active" data-tab="login">Нэвтрэх</button><button class="tab" data-tab="register">Бүртгүүлэх</button></div><h2 id="authTitle">Нэвтрэх</h2><form id="authForm"><label id="nameLabel" class="hidden">Нэр<input id="nameInput" autocomplete="name"></label><label>Имэйл<input id="emailInput" type="email" autocomplete="email" required></label><label>Нууц үг<input id="passInput" type="password" minlength="6" autocomplete="current-password" required></label><button class="btn primary full" type="submit" id="authSubmit">Нэвтрэх</button></form><p class="error" id="authError"></p></div></div>
 
-<div class="modal" id="detailModal"><div class="backdrop" data-close></div><div class="card wide"><button class="x" data-close>×</button><img id="detailPoster" class="detailPoster" alt=""><div class="detailBody"><span class="eyebrow" id="detailGenre"></span><h2 id="detailTitle"></h2><p id="detailDesc"></p><div class="priceRow"><button class="btn primary" id="buyMovieBtn">Нэг кино • 3,000₮</button><button class="btn glass" id="buySubBtn">30 хоног • 5,000₮</button></div><button class="btn play hidden" id="playBtn">▶ Одоо үзэх</button></div></div></div>
+<footer>
 
-<div class="modal" id="paymentModal"><div class="backdrop" data-close></div><div class="card"><button class="x" data-close>×</button><span class="eyebrow">ТӨЛБӨР</span><h2 id="payTitle">Төлбөрийн хүсэлт</h2><div class="bank"><div><span>Банк</span><b id="bankName"></b></div><div><span>Данс</span><b id="bankAccount"></b></div><div><span>Нэр</span><b id="bankOwner"></b></div><div class="ref"><span>Гүйлгээний утга</span><b id="payRef"></b></div></div><p>Шилжүүлсний дараа админ хүсэлтийг батлахад эрх автоматаар нээгдэнэ.</p><button class="btn glass full" data-close>Ойлголоо</button></div></div>
+  <a
+    class="logo"
+    href="#"
+  >
+    M<span>OO</span>D
+  </a>
 
-<div class="modal" id="playerModal"><div class="backdrop" data-close></div><div class="player"><button class="x playerX" data-close>×</button><video id="video" controls playsinline></video><div class="playerInfo"><h3 id="playerTitle"></h3><p>720p • secure link 15 минут хүчинтэй</p></div></div></div>
+  <p>
+    Зөвхөн өөрийн эсвэл
+    түгээх эрхтэй контент байршуулна.
+  </p>
 
-<div class="modal" id="adminModal"><div class="backdrop" data-close></div><div class="card adminCard"><button class="x" data-close>×</button><span class="eyebrow">ADMIN</span><h2>Кино нэмэх</h2><form id="movieForm"><div class="two"><label>Киноны нэр<input id="mTitle" required></label><label>Төрөл<input id="mGenre" value="drama"></label></div><label>Тайлбар<textarea id="mDesc" rows="3"></textarea></label><label>Үргэлжлэх хугацаа (мин)<input id="mDuration" type="number" value="90" min="1" max="600"></label><label>Poster<input id="posterFile" type="file" accept="image/jpeg,image/png,image/webp"></label><label>720p MP4 видео<input id="videoFile" type="file" accept="video/mp4" required></label><div class="progress"><div id="uploadBar"></div></div><div id="uploadText" class="muted"></div><button class="btn primary full" type="submit">Upload + кино үүсгэх</button></form><hr><h3>Хүлээгдэж буй төлбөрүүд</h3><div id="adminPurchases"></div></div></div>
+</footer>
 
-<script src="/app.js"></script></body></html>
+
+
+<!-- =========================
+     AUTH MODAL
+========================= -->
+
+<div
+  class="modal"
+  id="authModal"
+>
+
+  <div
+    class="backdrop"
+    data-close
+  ></div>
+
+  <div class="card">
+
+    <button
+      class="x"
+      data-close
+    >
+      ×
+    </button>
+
+    <div class="tabs">
+
+      <button
+        class="tab active"
+        data-tab="login"
+      >
+        Нэвтрэх
+      </button>
+
+      <button
+        class="tab"
+        data-tab="register"
+      >
+        Бүртгүүлэх
+      </button>
+
+    </div>
+
+
+    <h2 id="authTitle">
+      Нэвтрэх
+    </h2>
+
+
+    <form id="authForm">
+
+      <label
+        id="nameLabel"
+        class="hidden"
+      >
+        Нэр
+
+        <input
+          id="nameInput"
+          autocomplete="name"
+        >
+
+      </label>
+
+
+      <label>
+        Имэйл
+
+        <input
+          id="emailInput"
+          type="email"
+          autocomplete="email"
+          required
+        >
+      </label>
+
+
+      <label>
+        Нууц үг
+
+        <input
+          id="passInput"
+          type="password"
+          minlength="6"
+          autocomplete="current-password"
+          required
+        >
+      </label>
+
+
+      <button
+        class="btn primary full"
+        type="submit"
+        id="authSubmit"
+      >
+        Нэвтрэх
+      </button>
+
+    </form>
+
+
+    <p
+      class="error"
+      id="authError"
+    ></p>
+
+  </div>
+
+</div>
+
+
+
+<!-- =========================
+     MOVIE DETAIL
+========================= -->
+
+<div
+  class="modal"
+  id="detailModal"
+>
+
+  <div
+    class="backdrop"
+    data-close
+  ></div>
+
+  <div class="card wide">
+
+    <button
+      class="x"
+      data-close
+    >
+      ×
+    </button>
+
+
+    <img
+      id="detailPoster"
+      class="detailPoster"
+      alt=""
+    >
+
+
+    <div class="detailBody">
+
+      <span
+        class="eyebrow"
+        id="detailGenre"
+      ></span>
+
+      <h2 id="detailTitle"></h2>
+
+      <p id="detailDesc"></p>
+
+
+      <div class="priceRow">
+
+        <button
+          class="btn primary"
+          id="buyMovieBtn"
+        >
+          Нэг кино • 3,000₮
+        </button>
+
+        <button
+          class="btn glass"
+          id="buySubBtn"
+        >
+          30 хоног • 5,000₮
+        </button>
+
+      </div>
+
+
+      <button
+        class="btn play hidden"
+        id="playBtn"
+      >
+        ▶ Одоо үзэх
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+
+<!-- =========================
+     PAYMENT MODAL
+========================= -->
+
+<div
+  class="modal"
+  id="paymentModal"
+>
+
+  <div
+    class="backdrop"
+    data-close
+  ></div>
+
+  <div class="card">
+
+    <button
+      class="x"
+      data-close
+    >
+      ×
+    </button>
+
+
+    <span class="eyebrow">
+      ТӨЛБӨР
+    </span>
+
+
+    <h2 id="payTitle">
+      Төлбөрийн мэдээлэл
+    </h2>
+
+
+    <div class="bank">
+
+      <div>
+        <span>
+          Банк
+        </span>
+
+        <b id="bankName"></b>
+      </div>
+
+
+      <div>
+        <span>
+          Данс
+        </span>
+
+        <b id="bankAccount"></b>
+      </div>
+
+
+      <div>
+        <span>
+          Нэр
+        </span>
+
+        <b id="bankOwner"></b>
+      </div>
+
+
+      <div class="ref">
+
+        <span>
+          Гүйлгээний утга
+        </span>
+
+        <b id="payRef"></b>
+
+      </div>
+
+    </div>
+
+
+    <p>
+      Дээрх гүйлгээний утгыг яг хуулж
+      төлбөрөө шилжүүлсний дараа
+      доорх товчийг дарна уу.
+    </p>
+
+
+    <button
+      class="btn primary full"
+      id="confirmPaymentBtn"
+      type="button"
+    >
+      Би төлбөрөө шилжүүлсэн
+    </button>
+
+
+    <p
+      id="paymentStatus"
+      class="muted"
+    ></p>
+
+
+    <button
+      class="btn glass full"
+      data-close
+      type="button"
+    >
+      Хаах
+    </button>
+
+  </div>
+
+</div>
+
+
+
+<!-- =========================
+     PLAYER
+========================= -->
+
+<div
+  class="modal"
+  id="playerModal"
+>
+
+  <div
+    class="backdrop"
+    data-close
+  ></div>
+
+
+  <div class="player">
+
+    <button
+      class="x playerX"
+      data-close
+    >
+      ×
+    </button>
+
+
+    <video
+      id="video"
+      controls
+      playsinline
+    ></video>
+
+
+    <div class="playerInfo">
+
+      <h3 id="playerTitle"></h3>
+
+      <p>
+        720p • secure link
+        15 минут хүчинтэй
+      </p>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+
+<!-- =========================
+     ADMIN
+========================= -->
+
+<div
+  class="modal"
+  id="adminModal"
+>
+
+  <div
+    class="backdrop"
+    data-close
+  ></div>
+
+
+  <div class="card adminCard">
+
+    <button
+      class="x"
+      data-close
+    >
+      ×
+    </button>
+
+
+    <span class="eyebrow">
+      ADMIN
+    </span>
+
+
+    <h2>
+      Кино нэмэх
+    </h2>
+
+
+    <form id="movieForm">
+
+      <div class="two">
+
+        <label>
+          Киноны нэр
+
+          <input
+            id="mTitle"
+            required
+          >
+
+        </label>
+
+
+        <label>
+          Төрөл
+
+          <input
+            id="mGenre"
+            value="drama"
+          >
+
+        </label>
+
+      </div>
+
+
+      <label>
+        Тайлбар
+
+        <textarea
+          id="mDesc"
+          rows="3"
+        ></textarea>
+
+      </label>
+
+
+      <label>
+        Үргэлжлэх хугацаа (мин)
+
+        <input
+          id="mDuration"
+          type="number"
+          value="90"
+          min="1"
+          max="600"
+        >
+
+      </label>
+
+
+      <label>
+        Poster
+
+        <input
+          id="posterFile"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+        >
+
+      </label>
+
+
+      <label>
+        720p MP4 видео
+
+        <input
+          id="videoFile"
+          type="file"
+          accept="video/mp4"
+          required
+        >
+
+      </label>
+
+
+      <div class="progress">
+        <div id="uploadBar"></div>
+      </div>
+
+
+      <div
+        id="uploadText"
+        class="muted"
+      ></div>
+
+
+      <button
+        class="btn primary full"
+        type="submit"
+      >
+        Upload + кино үүсгэх
+      </button>
+
+    </form>
+
+
+    <hr>
+
+
+    <h3>
+      Кино удирдах
+    </h3>
+
+
+    <p class="muted">
+      Эндээс киноны мэдээллийг засах
+      эсвэл киног бүр мөсөн устгана.
+    </p>
+
+
+    <div id="adminMovies"></div>
+
+
+    <hr>
+
+
+    <h3>
+      Хүлээгдэж буй төлбөрүүд
+    </h3>
+
+
+    <div id="adminPurchases"></div>
+
+  </div>
+
+</div>
+
+
+
+<!-- =========================
+     EDIT MOVIE MODAL
+========================= -->
+
+<div
+  class="modal"
+  id="editMovieModal"
+>
+
+  <div
+    class="backdrop"
+    data-close
+  ></div>
+
+
+  <div class="card">
+
+    <button
+      class="x"
+      data-close
+    >
+      ×
+    </button>
+
+
+    <span class="eyebrow">
+      ADMIN • EDIT
+    </span>
+
+
+    <h2>
+      Кино засах
+    </h2>
+
+
+    <form id="editMovieForm">
+
+      <input
+        id="editMovieId"
+        type="hidden"
+      >
+
+
+      <div class="two">
+
+        <label>
+          Киноны нэр
+
+          <input
+            id="editTitle"
+            required
+          >
+
+        </label>
+
+
+        <label>
+          Төрөл
+
+          <input
+            id="editGenre"
+          >
+
+        </label>
+
+      </div>
+
+
+      <label>
+        Тайлбар
+
+        <textarea
+          id="editDesc"
+          rows="3"
+        ></textarea>
+
+      </label>
+
+
+      <label>
+        Үргэлжлэх хугацаа (мин)
+
+        <input
+          id="editDuration"
+          type="number"
+          min="1"
+          max="600"
+        >
+
+      </label>
+
+
+      <label>
+        Шинэ poster
+
+        <input
+          id="editPosterFile"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+        >
+
+        <small class="muted">
+          Poster солихгүй бол
+          хоосон үлдээнэ.
+        </small>
+
+      </label>
+
+
+      <label>
+        Шинэ 720p MP4 видео
+
+        <input
+          id="editVideoFile"
+          type="file"
+          accept="video/mp4"
+        >
+
+        <small class="muted">
+          Видео солихгүй бол
+          хоосон үлдээнэ.
+        </small>
+
+      </label>
+
+
+      <div class="progress">
+        <div id="editUploadBar"></div>
+      </div>
+
+
+      <div
+        id="editUploadText"
+        class="muted"
+      ></div>
+
+
+      <button
+        class="btn primary full"
+        type="submit"
+      >
+        Өөрчлөлт хадгалах
+      </button>
+
+
+      <button
+        class="btn glass full"
+        id="deleteMovieBtn"
+        type="button"
+      >
+        🗑️ Энэ киног устгах
+      </button>
+
+    </form>
+
+  </div>
+
+</div>
+
+
+<script src="/app.js"></script>
+
+</body>
+</html>
