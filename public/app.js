@@ -2159,10 +2159,7 @@ document.body.style.overflow = 'hidden';
                 )
               ]
                 .reverse()
-                .find(
-                  m =>
-                    m.style.display ===
-                    'flex'
+                ..find(m => m.style.display === 'grid');
                 );
 
             if (open) {
