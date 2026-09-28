@@ -289,18 +289,10 @@ async function streamUrl(request, env, movieId) {
 }
 
 async function createPurchase(request, env) {
-  const user = await requireUser(
-    request,
-    env,
-    true
-  );
-
+  const user = await requireUser(request, env, true);
   const body = await request.json();
 
-  const type =
-    body.type === 'subscription'
-      ? 'subscription'
-      : 'movie';
+  const type = body.type === 'subscription' ? 'subscription' : 'movie';
 
   let movieId = null;
   let amount = 5000;
@@ -309,54 +301,116 @@ async function createPurchase(request, env) {
     movieId = Number(body.movie_id);
 
     const movie = await env.DB
-      .prepare(
-        'SELECT id FROM movies WHERE id=? AND is_published=1'
-      )
+      .prepare('SELECT id FROM movies WHERE id=? AND is_published=1')
       .bind(movieId)
       .first();
 
     if (!movie) {
-      return json(
-        { error: 'Кино олдсонгүй.' },
-        404
-      );
+      return json({ error: 'Кино олдсонгүй.' }, 404);
     }
 
     amount = 3000;
   }
 
+  // Өмнө нээсэн эсвэл төлсөн гэж мэдэгдсэн request байвал шинээр үүсгэхгүй
+  const existing = await env.DB.prepare(`
+    SELECT *
+    FROM purchases
+    WHERE user_id=?
+      AND type=?
+      AND ((? IS NULL AND movie_id IS NULL) OR movie_id=?)
+      AND status IN ('initiated','pending')
+    ORDER BY created_at DESC
+    LIMIT 1
+  `).bind(
+    user.id,
+    type,
+    movieId,
+    movieId
+  ).first();
+
+  if (existing) {
+    return json({
+      ok: true,
+      purchase: existing,
+      payment: paymentInfo(env)
+    });
+  }
+
   const reference =
     `MD-${Date.now().toString(36).toUpperCase()}-${randomHex(3).toUpperCase()}`;
 
-  const r = await env.DB
-    .prepare(
-      'INSERT INTO purchases(user_id,type,movie_id,amount,reference_code,status,created_at) VALUES(?,?,?,?,?,\'pending\',?)'
-    )
-    .bind(
-      user.id,
+  const r = await env.DB.prepare(`
+    INSERT INTO purchases(
+      user_id,
       type,
-      movieId,
+      movie_id,
       amount,
-      reference,
-      Date.now()
+      reference_code,
+      status,
+      created_at
     )
-    .run();
+    VALUES(?,?,?,?,?,'initiated',?)
+  `).bind(
+    user.id,
+    type,
+    movieId,
+    amount,
+    reference,
+    Date.now()
+  ).run();
 
-  return json(
-    {
-      ok: true,
-      purchase: {
-        id: r.meta.last_row_id,
-        type,
-        movie_id: movieId,
-        amount,
-        reference_code: reference,
-        status: 'pending'
-      },
-      payment: paymentInfo(env)
+  return json({
+    ok: true,
+    purchase: {
+      id: r.meta.last_row_id,
+      type,
+      movie_id: movieId,
+      amount,
+      reference_code: reference,
+      status: 'initiated'
     },
-    201
-  );
+    payment: paymentInfo(env)
+  }, 201);
+}async function confirmPurchase(request, env, purchaseId) {
+  const user = await requireUser(request, env, true);
+
+  const purchase = await env.DB.prepare(`
+    SELECT *
+    FROM purchases
+    WHERE id=? AND user_id=?
+  `).bind(
+    purchaseId,
+    user.id
+  ).first();
+
+  if (!purchase) {
+    return json({ error: 'Төлбөрийн хүсэлт олдсонгүй.' }, 404);
+  }
+
+  if (purchase.status === 'pending') {
+    return json({ ok: true, status: 'pending' });
+  }
+
+  if (purchase.status !== 'initiated') {
+    return json({
+      error: 'Энэ хүсэлтийн төлөвийг өөрчлөх боломжгүй.'
+    }, 409);
+  }
+
+  await env.DB.prepare(`
+    UPDATE purchases
+    SET status='pending'
+    WHERE id=? AND user_id=?
+  `).bind(
+    purchaseId,
+    user.id
+  ).run();
+
+  return json({
+    ok: true,
+    status: 'pending'
+  });
 }
 
 async function myPurchases(request, env) {
@@ -577,24 +631,21 @@ async function adminDeleteMovie(
 async function adminPurchases(request, env) {
   await requireAdmin(request, env);
 
-  const rs = await env.DB
-    .prepare(
-      `SELECT
-         p.*,
-         u.email,
-         u.name,
-         m.title AS movie_title
-       FROM purchases p
-       JOIN users u ON u.id=p.user_id
-       LEFT JOIN movies m ON m.id=p.movie_id
-       ORDER BY p.created_at DESC
-       LIMIT 200`
-    )
-    .all();
+  const rs = await env.DB.prepare(`
+    SELECT
+      p.*,
+      u.email,
+      u.name,
+      m.title AS movie_title
+    FROM purchases p
+    JOIN users u ON u.id=p.user_id
+    LEFT JOIN movies m ON m.id=p.movie_id
+    WHERE p.status='pending'
+    ORDER BY p.created_at DESC
+    LIMIT 200
+  `).all();
 
-  return json({
-    purchases: rs.results
-  });
+  return json({ purchases: rs.results });
 }
 
 async function adminApprovePurchase(
