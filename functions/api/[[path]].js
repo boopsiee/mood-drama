@@ -1,136 +1,172 @@
 const enc = new TextEncoder();
-const dec = new TextDecoder();
 
-export async function onRequest(context) {
-  const { request, env } = context;
+export async function onRequest({ request, env }) {
   const url = new URL(request.url);
-  const path = url.pathname.replace(/^\/api\/?/, '').split('/').filter(Boolean);
-  const method = request.method.toUpperCase();
+  const p = url.pathname.replace(/^\/api\/?/, "").split("/").filter(Boolean);
+  const m = request.method.toUpperCase();
 
   try {
-    if (method === 'OPTIONS') return new Response(null, { status: 204 });
-    if (!env.DB) return json({ error: 'D1 binding DB is missing' }, 500);
+    if (m === "OPTIONS") return new Response(null, { status: 204 });
+    if (!env.DB) return json({ error: "D1 binding DB is missing" }, 500);
 
     await cleanupExpiredSessions(env);
 
-    if (path[0] === 'register' && method === 'POST') return register(request, env);
-    if (path[0] === 'login' && method === 'POST') return login(request, env);
-    if (path[0] === 'logout' && method === 'POST') return logout(request, env);
-    if (path[0] === 'me' && method === 'GET') return me(request, env);
-    if (path[0] === 'movies' && method === 'GET') return listMovies(request, env);
+    if (p[0] === "register" && m === "POST") return register(request, env);
+    if (p[0] === "login" && m === "POST") return login(request, env);
+    if (p[0] === "logout" && m === "POST") return logout(request, env);
+    if (p[0] === "me" && m === "GET") return me(request, env);
+    if (p[0] === "movies" && m === "GET") return listMovies(request, env);
 
     if (
-      path[0] === 'stream-url' &&
-      path[1] &&
-      method === 'GET'
+      p[0] === "stream-url" &&
+      p[1] &&
+      m === "GET"
     ) {
       return streamUrl(
         request,
         env,
-        Number(path[1])
+        Number(p[1])
       );
     }
 
-    // Confirm route MUST be before generic POST /purchases
     if (
-      path[0] === 'purchases' &&
-      path[1] &&
-      path[2] === 'confirm' &&
-      method === 'POST'
+      p[0] === "purchases" &&
+      p[1] &&
+      p[2] === "confirm" &&
+      m === "POST"
     ) {
       return confirmPurchase(
         request,
         env,
-        Number(path[1])
+        Number(p[1])
       );
     }
 
     if (
-      path[0] === 'purchases' &&
-      method === 'POST'
+      p[0] === "purchases" &&
+      m === "POST"
     ) {
-      return createPurchase(request, env);
+      return createPurchase(
+        request,
+        env
+      );
     }
 
     if (
-      path[0] === 'purchases' &&
-      method === 'GET'
+      p[0] === "purchases" &&
+      m === "GET"
     ) {
-      return myPurchases(request, env);
+      return myPurchases(
+        request,
+        env
+      );
     }
 
     if (
-      path[0] === 'admin' &&
-      path[1] === 'upload-url' &&
-      method === 'POST'
+      p[0] === "admin" &&
+      p[1] === "upload-url" &&
+      m === "POST"
     ) {
-      return adminUploadUrl(request, env);
+      return adminUploadUrl(
+        request,
+        env
+      );
     }
 
     if (
-      path[0] === 'admin' &&
-      path[1] === 'movies' &&
-      method === 'POST'
+      p[0] === "admin" &&
+      p[1] === "movies" &&
+      !p[2] &&
+      m === "POST"
     ) {
-      return adminCreateMovie(request, env);
+      return adminCreateMovie(
+        request,
+        env
+      );
     }
 
     if (
-      path[0] === 'admin' &&
-      path[1] === 'movies' &&
-      path[2] &&
-      method === 'DELETE'
+      p[0] === "admin" &&
+      p[1] === "movies" &&
+      p[2] &&
+      m === "PUT"
+    ) {
+      return adminUpdateMovie(
+        request,
+        env,
+        Number(p[2])
+      );
+    }
+
+    if (
+      p[0] === "admin" &&
+      p[1] === "movies" &&
+      p[2] &&
+      m === "DELETE"
     ) {
       return adminDeleteMovie(
         request,
         env,
-        Number(path[2])
+        Number(p[2])
       );
     }
 
     if (
-      path[0] === 'admin' &&
-      path[1] === 'purchases' &&
-      method === 'GET'
+      p[0] === "admin" &&
+      p[1] === "purchases" &&
+      !p[2] &&
+      m === "GET"
     ) {
-      return adminPurchases(request, env);
+      return adminPurchases(
+        request,
+        env
+      );
     }
 
     if (
-      path[0] === 'admin' &&
-      path[1] === 'purchases' &&
-      path[2] &&
-      path[3] === 'approve' &&
-      method === 'POST'
+      p[0] === "admin" &&
+      p[1] === "purchases" &&
+      p[2] &&
+      p[3] === "approve" &&
+      m === "POST"
     ) {
       return adminApprovePurchase(
         request,
         env,
-        Number(path[2])
+        Number(p[2])
       );
     }
 
     if (
-      path[0] === 'admin' &&
-      path[1] === 'purchases' &&
-      path[2] &&
-      path[3] === 'reject' &&
-      method === 'POST'
+      p[0] === "admin" &&
+      p[1] === "purchases" &&
+      p[2] &&
+      p[3] === "reject" &&
+      m === "POST"
     ) {
       return adminRejectPurchase(
         request,
         env,
-        Number(path[2])
+        Number(p[2])
       );
     }
 
-    return json({ error: 'Not found' }, 404);
+    return json(
+      {
+        error: "Not found"
+      },
+      404
+    );
 
   } catch (e) {
     console.error(e);
 
     return json(
-      { error: e?.message || 'Server error' },
+      {
+        error:
+          e?.message ||
+          "Server error"
+      },
       e?.status || 500
     );
   }
@@ -138,94 +174,130 @@ export async function onRequest(context) {
 
 
 
-async function register(request, env) {
-  const body = await request.json();
+async function register(
+  request,
+  env
+) {
+  const b =
+    await request.json();
 
-  const email = String(body.email || '')
-    .trim()
-    .toLowerCase();
+  const email =
+    String(
+      b.email || ""
+    )
+      .trim()
+      .toLowerCase();
 
-  const name = String(body.name || '')
-    .trim()
-    .slice(0, 80);
+  const name =
+    String(
+      b.name || ""
+    )
+      .trim()
+      .slice(
+        0,
+        80
+      );
 
-  const password = String(body.password || '');
+  const password =
+    String(
+      b.password || ""
+    );
 
   if (
-    !/^\S+@\S+\.\S+$/.test(email) ||
+    !/^\S+@\S+\.\S+$/.test(
+      email
+    ) ||
     name.length < 2 ||
     password.length < 6
   ) {
     return json(
-      { error: 'Мэдээллээ зөв бөглөнө үү.' },
+      {
+        error:
+          "Мэдээллээ зөв бөглөнө үү."
+      },
       400
     );
   }
 
-  const exists = await env.DB
-    .prepare(
-      'SELECT id FROM users WHERE email=?'
-    )
-    .bind(email)
-    .first();
+  const exists =
+    await env.DB
+      .prepare(
+        "SELECT id FROM users WHERE email=?"
+      )
+      .bind(
+        email
+      )
+      .first();
 
   if (exists) {
     return json(
-      { error: 'Энэ имэйл бүртгэлтэй байна.' },
+      {
+        error:
+          "Энэ имэйл бүртгэлтэй байна."
+      },
       409
     );
   }
 
-  const salt = randomHex(16);
+  const salt =
+    randomHex(16);
 
-  const password_hash =
+  const passwordHash =
     await hashPassword(
       password,
       salt
     );
 
   const adminEmail =
-    String(env.ADMIN_EMAIL || '')
+    String(
+      env.ADMIN_EMAIL || ""
+    )
       .trim()
       .toLowerCase();
 
   const role =
     adminEmail &&
     email === adminEmail
-      ? 'admin'
-      : 'user';
+      ? "admin"
+      : "user";
 
-  const now = Date.now();
+  const now =
+    Date.now();
 
-  const r = await env.DB
-    .prepare(
-      `INSERT INTO users(
+  const r =
+    await env.DB
+      .prepare(
+        `INSERT INTO users(
+          email,
+          name,
+          password_hash,
+          password_salt,
+          role,
+          created_at
+        )
+        VALUES(
+          ?,
+          ?,
+          ?,
+          ?,
+          ?,
+          ?
+        )`
+      )
+      .bind(
         email,
         name,
-        password_hash,
-        password_salt,
+        passwordHash,
+        salt,
         role,
-        created_at
+        now
       )
-      VALUES(?,?,?,?,?,?)`
-    )
-    .bind(
-      email,
-      name,
-      password_hash,
-      salt,
-      role,
-      now
-    )
-    .run();
-
-  const userId =
-    r.meta.last_row_id;
+      .run();
 
   const session =
     await createSession(
       env,
-      userId
+      r.meta.last_row_id
     );
 
   return json(
@@ -233,37 +305,52 @@ async function register(request, env) {
       ok: true,
 
       user: {
-        id: userId,
+        id:
+          r.meta.last_row_id,
+
         email,
+
         name,
+
         role
       }
     },
     201,
-    sessionCookie(session)
+    sessionCookie(
+      session
+    )
   );
 }
 
 
 
-async function login(request, env) {
-  const body =
+async function login(
+  request,
+  env
+) {
+  const b =
     await request.json();
 
   const email =
-    String(body.email || '')
+    String(
+      b.email || ""
+    )
       .trim()
       .toLowerCase();
 
   const password =
-    String(body.password || '');
+    String(
+      b.password || ""
+    );
 
   const user =
     await env.DB
       .prepare(
-        'SELECT * FROM users WHERE email=?'
+        "SELECT * FROM users WHERE email=?"
       )
-      .bind(email)
+      .bind(
+        email
+      )
       .first();
 
   if (
@@ -277,7 +364,7 @@ async function login(request, env) {
     return json(
       {
         error:
-          'Имэйл эсвэл нууц үг буруу.'
+          "Имэйл эсвэл нууц үг буруу."
       },
       401
     );
@@ -292,44 +379,59 @@ async function login(request, env) {
   return json(
     {
       ok: true,
-      user: safeUser(user)
+      user:
+        safeUser(
+          user
+        )
     },
     200,
-    sessionCookie(session)
+    sessionCookie(
+      session
+    )
   );
 }
 
 
 
-async function logout(request, env) {
+async function logout(
+  request,
+  env
+) {
   const sid =
     getCookie(
       request,
-      'sid'
+      "sid"
     );
 
   if (sid) {
     await env.DB
       .prepare(
-        'DELETE FROM sessions WHERE id=?'
+        "DELETE FROM sessions WHERE id=?"
       )
-      .bind(sid)
+      .bind(
+        sid
+      )
       .run();
   }
 
   return json(
-    { ok: true },
+    {
+      ok: true
+    },
     200,
     {
-      'Set-Cookie':
-        'sid=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0'
+      "Set-Cookie":
+        "sid=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0"
     }
   );
 }
 
 
 
-async function me(request, env) {
+async function me(
+  request,
+  env
+) {
   const user =
     await requireUser(
       request,
@@ -346,22 +448,31 @@ async function me(request, env) {
   const sub =
     await env.DB
       .prepare(
-        'SELECT expires_at FROM subscriptions WHERE user_id=?'
+        "SELECT expires_at FROM subscriptions WHERE user_id=?"
       )
-      .bind(user.id)
+      .bind(
+        user.id
+      )
       .first();
 
   return json({
-    user: safeUser(user),
+    user:
+      safeUser(
+        user
+      ),
 
     subscription_expires_at:
-      sub?.expires_at || null
+      sub?.expires_at ||
+      null
   });
 }
 
 
 
-async function listMovies(request, env) {
+async function listMovies(
+  request,
+  env
+) {
   const user =
     await requireUser(
       request,
@@ -372,22 +483,25 @@ async function listMovies(request, env) {
   const rs =
     await env.DB
       .prepare(
-        'SELECT * FROM movies WHERE is_published=1 ORDER BY created_at DESC'
+        "SELECT * FROM movies WHERE is_published=1 ORDER BY created_at DESC"
       )
       .all();
 
-  let subActive = false;
+  let subActive =
+    false;
 
-  const entitlements =
+  const ent =
     new Set();
 
   if (user) {
     const sub =
       await env.DB
         .prepare(
-          'SELECT expires_at FROM subscriptions WHERE user_id=?'
+          "SELECT expires_at FROM subscriptions WHERE user_id=?"
         )
-        .bind(user.id)
+        .bind(
+          user.id
+        )
         .first();
 
     subActive =
@@ -398,14 +512,16 @@ async function listMovies(request, env) {
     const er =
       await env.DB
         .prepare(
-          'SELECT movie_id FROM movie_entitlements WHERE user_id=?'
+          "SELECT movie_id FROM movie_entitlements WHERE user_id=?"
         )
-        .bind(user.id)
+        .bind(
+          user.id
+        )
         .all();
 
     er.results.forEach(
       x =>
-        entitlements.add(
+        ent.add(
           x.movie_id
         )
     );
@@ -414,27 +530,28 @@ async function listMovies(request, env) {
   const movies =
     await Promise.all(
       rs.results.map(
-        async m => ({
-          id: m.id,
+        async x => ({
+          id:
+            x.id,
 
           title:
-            m.title,
+            x.title,
 
           description:
-            m.description,
+            x.description,
 
           genre:
-            m.genre,
+            x.genre,
 
           duration_minutes:
-            m.duration_minutes,
+            x.duration_minutes,
 
           poster_url:
-            m.poster_key
+            x.poster_key
               ? await presign(
                   env,
-                  'GET',
-                  m.poster_key,
+                  "GET",
+                  x.poster_key,
                   3600
                 )
               : null,
@@ -443,8 +560,8 @@ async function listMovies(request, env) {
             !!user &&
             (
               subActive ||
-              entitlements.has(
-                m.id
+              ent.has(
+                x.id
               )
             )
         })
@@ -478,14 +595,16 @@ async function streamUrl(
          WHERE id=?
          AND is_published=1`
       )
-      .bind(movieId)
+      .bind(
+        movieId
+      )
       .first();
 
   if (!movie) {
     return json(
       {
         error:
-          'Кино олдсонгүй.'
+          "Кино олдсонгүй."
       },
       404
     );
@@ -502,23 +621,23 @@ async function streamUrl(
     return json(
       {
         error:
-          'Энэ киног үзэх эрх алга.'
+          "Энэ киног үзэх эрх алга."
       },
       403
     );
   }
 
-  const url =
-    await presign(
-      env,
-      'GET',
-      movie.video_key,
-      900
-    );
-
   return json({
-    url,
-    expires_in: 900
+    url:
+      await presign(
+        env,
+        "GET",
+        movie.video_key,
+        900
+      ),
+
+    expires_in:
+      900
   });
 }
 
@@ -535,20 +654,28 @@ async function createPurchase(
       true
     );
 
-  const body =
+  const b =
     await request.json();
 
   const type =
-    body.type === 'subscription'
-      ? 'subscription'
-      : 'movie';
+    b.type === "subscription"
+      ? "subscription"
+      : "movie";
 
-  let movieId = null;
-  let amount = 5000;
+  let movieId =
+    null;
 
-  if (type === 'movie') {
+  let amount =
+    5000;
+
+  if (
+    type ===
+    "movie"
+  ) {
     movieId =
-      Number(body.movie_id);
+      Number(
+        b.movie_id
+      );
 
     const movie =
       await env.DB
@@ -558,26 +685,31 @@ async function createPurchase(
            WHERE id=?
            AND is_published=1`
         )
-        .bind(movieId)
+        .bind(
+          movieId
+        )
         .first();
 
     if (!movie) {
       return json(
         {
           error:
-            'Кино олдсонгүй.'
+            "Кино олдсонгүй."
         },
         404
       );
     }
 
-    amount = 3000;
+    amount =
+      3000;
   }
 
   /*
-    Хэрэв өмнө нь initiated эсвэл pending
-    хүсэлт байгаа бол дахин шинээр
-    purchase үүсгэхгүй.
+    pending + approved_at NULL
+    = зөвхөн payment цонх нээсэн
+
+    pending + approved_at -1
+    = "Би төлбөрөө шилжүүлсэн" дарсан
   */
 
   const existing =
@@ -594,10 +726,7 @@ async function createPurchase(
            )
            OR movie_id=?
          )
-         AND status IN(
-           'initiated',
-           'pending'
-         )
+         AND status='pending'
          ORDER BY created_at DESC
          LIMIT 1`
       )
@@ -613,11 +742,19 @@ async function createPurchase(
     return json({
       ok: true,
 
-      purchase:
-        existing,
+      purchase: {
+        ...existing,
+
+        confirmed:
+          Number(
+            existing.approved_at
+          ) === -1
+      },
 
       payment:
-        paymentInfo(env)
+        paymentInfo(
+          env
+        )
     });
   }
 
@@ -626,11 +763,6 @@ async function createPurchase(
       .toString(36)
       .toUpperCase()}-${randomHex(3)
       .toUpperCase()}`;
-
-  /*
-    ЭНЭ ҮЕД ADMIN-Д ХАРАГДАХГҮЙ.
-    status = initiated
-  */
 
   const r =
     await env.DB
@@ -650,7 +782,7 @@ async function createPurchase(
           ?,
           ?,
           ?,
-          'initiated',
+          'pending',
           ?
         )`
       )
@@ -683,11 +815,19 @@ async function createPurchase(
           reference,
 
         status:
-          'initiated'
+          "pending",
+
+        approved_at:
+          null,
+
+        confirmed:
+          false
       },
 
       payment:
-        paymentInfo(env)
+        paymentInfo(
+          env
+        )
     },
     201
   );
@@ -725,57 +865,48 @@ async function confirmPurchase(
     return json(
       {
         error:
-          'Төлбөрийн хүсэлт олдсонгүй.'
+          "Төлбөрийн хүсэлт олдсонгүй."
       },
       404
     );
   }
 
-  /*
-    Аль хэдийн "төлсөн" гэж мэдэгдсэн бол
-    дахиж update хийх шаардлагагүй.
-  */
-
-  if (
-    purchase.status ===
-    'pending'
-  ) {
-    return json({
-      ok: true,
-      status: 'pending'
-    });
-  }
-
-  /*
-    Зөвхөн initiated хүсэлтийг
-    pending болгож болно.
-  */
-
   if (
     purchase.status !==
-    'initiated'
+    "pending"
   ) {
     return json(
       {
         error:
-          'Энэ хүсэлтийн төлөвийг өөрчлөх боломжгүй.'
+          "Энэ хүсэлтийн төлөвийг өөрчлөх боломжгүй."
       },
       409
     );
   }
 
-  /*
-    "Би төлбөрөө шилжүүлсэн"
-    товч дарсны дараа л pending болно.
-    Энэ үеэс Admin дээр харагдана.
-  */
+  if (
+    Number(
+      purchase.approved_at
+    ) === -1
+  ) {
+    return json({
+      ok: true,
+
+      status:
+        "pending",
+
+      confirmed:
+        true
+    });
+  }
 
   await env.DB
     .prepare(
       `UPDATE purchases
-       SET status='pending'
+       SET approved_at=-1
        WHERE id=?
-       AND user_id=?`
+       AND user_id=?
+       AND status='pending'`
     )
     .bind(
       purchaseId,
@@ -785,7 +916,12 @@ async function confirmPurchase(
 
   return json({
     ok: true,
-    status: 'pending'
+
+    status:
+      "pending",
+
+    confirmed:
+      true
   });
 }
 
@@ -815,7 +951,9 @@ async function myPurchases(
          ORDER BY p.created_at DESC
          LIMIT 50`
       )
-      .bind(user.id)
+      .bind(
+        user.id
+      )
       .all();
 
   return json({
@@ -823,7 +961,9 @@ async function myPurchases(
       rs.results,
 
     payment:
-      paymentInfo(env)
+      paymentInfo(
+        env
+      )
   });
 }
 
@@ -838,67 +978,71 @@ async function adminUploadUrl(
     env
   );
 
-  const body =
+  const b =
     await request.json();
 
   const kind =
-    body.kind === 'poster'
-      ? 'poster'
-      : 'video';
+    b.kind === "poster"
+      ? "poster"
+      : "video";
 
-  const fileName =
+  const name =
     sanitizeFileName(
       String(
-        body.file_name ||
+        b.file_name ||
         (
-          kind === 'video'
-            ? 'video.mp4'
-            : 'poster.jpg'
+          kind === "video"
+            ? "video.mp4"
+            : "poster.jpg"
         )
       )
     );
 
   const ext =
-    fileName.includes('.')
-      ? fileName
-          .split('.')
+    name.includes(".")
+      ? name
+          .split(".")
           .pop()
           .toLowerCase()
       : (
-          kind === 'video'
-            ? 'mp4'
-            : 'jpg'
+          kind === "video"
+            ? "mp4"
+            : "jpg"
         );
 
   if (
-    kind === 'video' &&
+    kind === "video" &&
     ![
-      'mp4',
-      'm4v'
-    ].includes(ext)
+      "mp4",
+      "m4v"
+    ].includes(
+      ext
+    )
   ) {
     return json(
       {
         error:
-          'Видео MP4 байх шаардлагатай.'
+          "Видео MP4 байх шаардлагатай."
       },
       400
     );
   }
 
   if (
-    kind === 'poster' &&
+    kind === "poster" &&
     ![
-      'jpg',
-      'jpeg',
-      'png',
-      'webp'
-    ].includes(ext)
+      "jpg",
+      "jpeg",
+      "png",
+      "webp"
+    ].includes(
+      ext
+    )
   ) {
     return json(
       {
         error:
-          'Poster JPG/PNG/WebP байна.'
+          "Poster JPG/PNG/WebP байна."
       },
       400
     );
@@ -907,18 +1051,19 @@ async function adminUploadUrl(
   const key =
     `${kind}s/${Date.now()}-${randomHex(6)}.${ext}`;
 
-  const url =
-    await presign(
-      env,
-      'PUT',
-      key,
-      3600
-    );
-
   return json({
     key,
-    url,
-    expires_in: 3600
+
+    url:
+      await presign(
+        env,
+        "PUT",
+        key,
+        3600
+      ),
+
+    expires_in:
+      3600
   });
 }
 
@@ -933,27 +1078,38 @@ async function adminCreateMovie(
     env
   );
 
-  const body =
+  const b =
     await request.json();
 
   const title =
-    String(body.title || '')
+    String(
+      b.title || ""
+    )
       .trim()
-      .slice(0, 160);
+      .slice(
+        0,
+        160
+      );
 
   const description =
     String(
-      body.description || ''
+      b.description || ""
     )
       .trim()
-      .slice(0, 1000);
+      .slice(
+        0,
+        1000
+      );
 
   const genre =
     String(
-      body.genre || 'drama'
+      b.genre || "drama"
     )
       .trim()
-      .slice(0, 40);
+      .slice(
+        0,
+        40
+      );
 
   const duration =
     Math.max(
@@ -961,7 +1117,7 @@ async function adminCreateMovie(
       Math.min(
         600,
         Number(
-          body.duration_minutes ||
+          b.duration_minutes ||
           90
         )
       )
@@ -969,12 +1125,12 @@ async function adminCreateMovie(
 
   const videoKey =
     String(
-      body.video_key || ''
+      b.video_key || ""
     ).trim();
 
   const posterKey =
     String(
-      body.poster_key || ''
+      b.poster_key || ""
     ).trim() ||
     null;
 
@@ -985,7 +1141,7 @@ async function adminCreateMovie(
     return json(
       {
         error:
-          'Нэр болон video_key шаардлагатай.'
+          "Нэр болон video_key шаардлагатай."
       },
       400
     );
@@ -1029,11 +1185,207 @@ async function adminCreateMovie(
   return json(
     {
       ok: true,
+
       id:
         r.meta.last_row_id
     },
     201
   );
+}
+
+
+
+async function adminUpdateMovie(
+  request,
+  env,
+  movieId
+) {
+  await requireAdmin(
+    request,
+    env
+  );
+
+  const current =
+    await env.DB
+      .prepare(
+        "SELECT * FROM movies WHERE id=?"
+      )
+      .bind(
+        movieId
+      )
+      .first();
+
+  if (!current) {
+    return json(
+      {
+        error:
+          "Кино олдсонгүй."
+      },
+      404
+    );
+  }
+
+  const b =
+    await request.json();
+
+  const title =
+    b.title !== undefined
+      ? String(
+          b.title || ""
+        )
+          .trim()
+          .slice(
+            0,
+            160
+          )
+      : current.title;
+
+  const description =
+    b.description !== undefined
+      ? String(
+          b.description || ""
+        )
+          .trim()
+          .slice(
+            0,
+            1000
+          )
+      : current.description;
+
+  const genre =
+    b.genre !== undefined
+      ? String(
+          b.genre || "drama"
+        )
+          .trim()
+          .slice(
+            0,
+            40
+          )
+      : current.genre;
+
+  const duration =
+    b.duration_minutes !== undefined
+      ? Math.max(
+          1,
+          Math.min(
+            600,
+            Number(
+              b.duration_minutes ||
+              90
+            )
+          )
+        )
+      : current.duration_minutes;
+
+  const videoKey =
+    b.video_key !== undefined
+      ? String(
+          b.video_key || ""
+        ).trim()
+      : current.video_key;
+
+  const posterKey =
+    b.poster_key !== undefined
+      ? (
+          String(
+            b.poster_key || ""
+          ).trim() ||
+          null
+        )
+      : current.poster_key;
+
+  if (
+    !title ||
+    !videoKey
+  ) {
+    return json(
+      {
+        error:
+          "Нэр болон video_key шаардлагатай."
+      },
+      400
+    );
+  }
+
+  await env.DB
+    .prepare(
+      `UPDATE movies
+       SET
+         title=?,
+         description=?,
+         genre=?,
+         duration_minutes=?,
+         video_key=?,
+         poster_key=?
+       WHERE id=?`
+    )
+    .bind(
+      title,
+      description,
+      genre,
+      duration,
+      videoKey,
+      posterKey,
+      movieId
+    )
+    .run();
+
+  if (env.VIDEOS) {
+    if (
+      b.video_key !== undefined &&
+      current.video_key &&
+      current.video_key !==
+      videoKey
+    ) {
+      await env.VIDEOS
+        .delete(
+          current.video_key
+        )
+        .catch(
+          () => {}
+        );
+    }
+
+    if (
+      b.poster_key !== undefined &&
+      current.poster_key &&
+      current.poster_key !==
+      posterKey
+    ) {
+      await env.VIDEOS
+        .delete(
+          current.poster_key
+        )
+        .catch(
+          () => {}
+        );
+    }
+  }
+
+  return json({
+    ok: true,
+
+    movie: {
+      id:
+        movieId,
+
+      title,
+
+      description,
+
+      genre,
+
+      duration_minutes:
+        duration,
+
+      video_key:
+        videoKey,
+
+      poster_key:
+        posterKey
+    }
+  });
 }
 
 
@@ -1051,23 +1403,27 @@ async function adminDeleteMovie(
   const movie =
     await env.DB
       .prepare(
-        'SELECT * FROM movies WHERE id=?'
+        "SELECT * FROM movies WHERE id=?"
       )
-      .bind(movieId)
+      .bind(
+        movieId
+      )
       .first();
 
   if (!movie) {
     return json(
       {
         error:
-          'Кино олдсонгүй.'
+          "Кино олдсонгүй."
       },
       404
     );
   }
 
   if (env.VIDEOS) {
-    if (movie.video_key) {
+    if (
+      movie.video_key
+    ) {
       await env.VIDEOS
         .delete(
           movie.video_key
@@ -1077,7 +1433,9 @@ async function adminDeleteMovie(
         );
     }
 
-    if (movie.poster_key) {
+    if (
+      movie.poster_key
+    ) {
       await env.VIDEOS
         .delete(
           movie.poster_key
@@ -1090,9 +1448,11 @@ async function adminDeleteMovie(
 
   await env.DB
     .prepare(
-      'DELETE FROM movies WHERE id=?'
+      "DELETE FROM movies WHERE id=?"
     )
-    .bind(movieId)
+    .bind(
+      movieId
+    )
     .run();
 
   return json({
@@ -1111,13 +1471,6 @@ async function adminPurchases(
     env
   );
 
-  /*
-    Admin дээр зөвхөн
-    "Би төлбөрөө шилжүүлсэн"
-    гэж мэдэгдсэн pending хүсэлтүүд
-    харагдана.
-  */
-
   const rs =
     await env.DB
       .prepare(
@@ -1132,6 +1485,7 @@ async function adminPurchases(
          LEFT JOIN movies m
            ON m.id=p.movie_id
          WHERE p.status='pending'
+         AND p.approved_at=-1
          ORDER BY p.created_at DESC
          LIMIT 200`
       )
@@ -1158,16 +1512,18 @@ async function adminApprovePurchase(
   const p =
     await env.DB
       .prepare(
-        'SELECT * FROM purchases WHERE id=?'
+        "SELECT * FROM purchases WHERE id=?"
       )
-      .bind(purchaseId)
+      .bind(
+        purchaseId
+      )
       .first();
 
   if (!p) {
     return json(
       {
         error:
-          'Төлбөрийн хүсэлт олдсонгүй.'
+          "Төлбөрийн хүсэлт олдсонгүй."
       },
       404
     );
@@ -1175,11 +1531,24 @@ async function adminApprovePurchase(
 
   if (
     p.status ===
-    'approved'
+    "approved"
   ) {
     return json({
       ok: true
     });
+  }
+
+  if (
+    p.status !==
+    "pending"
+  ) {
+    return json(
+      {
+        error:
+          "Энэ хүсэлт pending биш байна."
+      },
+      409
+    );
   }
 
   const now =
@@ -1187,7 +1556,7 @@ async function adminApprovePurchase(
 
   if (
     p.type ===
-    'movie'
+    "movie"
   ) {
     await env.DB
       .prepare(
@@ -1210,10 +1579,10 @@ async function adminApprovePurchase(
       .run();
 
   } else {
-    const existing =
+    const old =
       await env.DB
         .prepare(
-          'SELECT expires_at FROM subscriptions WHERE user_id=?'
+          "SELECT expires_at FROM subscriptions WHERE user_id=?"
         )
         .bind(
           p.user_id
@@ -1221,9 +1590,9 @@ async function adminApprovePurchase(
         .first();
 
     const base =
-      existing?.expires_at >
+      old?.expires_at >
       now
-        ? existing.expires_at
+        ? old.expires_at
         : now;
 
     const expires =
@@ -1322,9 +1691,11 @@ async function hasAccess(
   const sub =
     await env.DB
       .prepare(
-        'SELECT expires_at FROM subscriptions WHERE user_id=?'
+        "SELECT expires_at FROM subscriptions WHERE user_id=?"
       )
-      .bind(userId)
+      .bind(
+        userId
+      )
       .first();
 
   if (
@@ -1366,11 +1737,11 @@ async function requireAdmin(
 
   if (
     user.role !==
-    'admin'
+    "admin"
   ) {
     throw httpError(
       403,
-      'Admin эрх шаардлагатай.'
+      "Admin эрх шаардлагатай."
     );
   }
 
@@ -1387,14 +1758,14 @@ async function requireUser(
   const sid =
     getCookie(
       request,
-      'sid'
+      "sid"
     );
 
   if (!sid) {
     if (required) {
       throw httpError(
         401,
-        'Нэвтэрнэ үү.'
+        "Нэвтэрнэ үү."
       );
     }
 
@@ -1423,11 +1794,12 @@ async function requireUser(
   ) {
     throw httpError(
       401,
-      'Нэвтрэх хугацаа дууссан.'
+      "Нэвтрэх хугацаа дууссан."
     );
   }
 
-  return user || null;
+  return user ||
+    null;
 }
 
 
@@ -1437,7 +1809,9 @@ function httpError(
   message
 ) {
   const e =
-    new Error(message);
+    new Error(
+      message
+    );
 
   e.status =
     status;
@@ -1456,7 +1830,7 @@ async function cleanupExpiredSessions(
   ) {
     await env.DB
       .prepare(
-        'DELETE FROM sessions WHERE expires_at<?'
+        "DELETE FROM sessions WHERE expires_at<?"
       )
       .bind(
         Date.now()
@@ -1513,7 +1887,9 @@ async function createSession(
 
 
 
-function sessionCookie(s) {
+function sessionCookie(
+  s
+) {
   const maxAge =
     Math.floor(
       (
@@ -1524,14 +1900,16 @@ function sessionCookie(s) {
     );
 
   return {
-    'Set-Cookie':
+    "Set-Cookie":
       `sid=${s.sid}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${maxAge}`
   };
 }
 
 
 
-function safeUser(u) {
+function safeUser(
+  u
+) {
   return {
     id:
       u.id,
@@ -1549,19 +1927,21 @@ function safeUser(u) {
 
 
 
-function paymentInfo(env) {
+function paymentInfo(
+  env
+) {
   return {
     bank_name:
       env.BANK_NAME ||
-      'БАНКНЫ НЭР',
+      "БАНКНЫ НЭР",
 
     account_name:
       env.BANK_ACCOUNT_NAME ||
-      'ДАНС ЭЗЭМШИГЧ',
+      "ДАНС ЭЗЭМШИГЧ",
 
     account_number:
       env.BANK_ACCOUNT_NUMBER ||
-      '0000000000'
+      "0000000000"
   };
 }
 
@@ -1573,24 +1953,26 @@ function getCookie(
 ) {
   const h =
     request.headers.get(
-      'cookie'
-    ) || '';
+      "cookie"
+    ) || "";
 
   for (
-    const p of h.split(';')
+    const part of h.split(";")
   ) {
     const [
-      k,
-      ...v
+      key,
+      ...value
     ] =
-      p
+      part
         .trim()
-        .split('=');
+        .split("=");
 
     if (
-      k === name
+      key === name
     ) {
-      return v.join('=');
+      return value.join(
+        "="
+      );
     }
   }
 
@@ -1603,30 +1985,32 @@ async function hashPassword(
   password,
   saltHex
 ) {
-  const salt =
-    hexToBytes(
-      saltHex
-    );
-
   const key =
     await crypto.subtle.importKey(
-      'raw',
-      enc.encode(password),
-      'PBKDF2',
+      "raw",
+      enc.encode(
+        password
+      ),
+      "PBKDF2",
       false,
-      ['deriveBits']
+      [
+        "deriveBits"
+      ]
     );
 
   const bits =
     await crypto.subtle.deriveBits(
       {
         name:
-          'PBKDF2',
+          "PBKDF2",
 
         hash:
-          'SHA-256',
+          "SHA-256",
 
-        salt,
+        salt:
+          hexToBytes(
+            saltHex
+          ),
 
         iterations:
           100000
@@ -1671,7 +2055,8 @@ function timingSafeEqual(
     return false;
   }
 
-  let x = 0;
+  let x =
+    0;
 
   for (
     let i = 0;
@@ -1696,30 +2081,39 @@ function randomHex(
       bytes
     );
 
-  crypto.getRandomValues(a);
+  crypto
+    .getRandomValues(
+      a
+    );
 
-  return bytesToHex(a);
+  return bytesToHex(
+    a
+  );
 }
 
 
 
-function bytesToHex(a) {
+function bytesToHex(
+  a
+) {
   return [...a]
     .map(
-      b =>
-        b
+      x =>
+        x
           .toString(16)
           .padStart(
             2,
-            '0'
+            "0"
           )
     )
-    .join('');
+    .join("");
 }
 
 
 
-function hexToBytes(h) {
+function hexToBytes(
+  h
+) {
   const a =
     new Uint8Array(
       h.length / 2
@@ -1745,13 +2139,17 @@ function hexToBytes(h) {
 
 
 
-function sanitizeFileName(s) {
+function sanitizeFileName(
+  s
+) {
   return s
     .replace(
       /[^a-zA-Z0-9._-]/g,
-      '_'
+      "_"
     )
-    .slice(-120);
+    .slice(
+      -120
+    );
 }
 
 
@@ -1762,16 +2160,18 @@ function json(
   headers = {}
 ) {
   return new Response(
-    JSON.stringify(data),
+    JSON.stringify(
+      data
+    ),
     {
       status,
 
       headers: {
-        'content-type':
-          'application/json; charset=utf-8',
+        "content-type":
+          "application/json; charset=utf-8",
 
-        'cache-control':
-          'no-store',
+        "cache-control":
+          "no-store",
 
         ...headers
       }
@@ -1787,26 +2187,29 @@ async function hmac(
 ) {
   const k =
     await crypto.subtle.importKey(
-      'raw',
+      "raw",
       key,
       {
         name:
-          'HMAC',
+          "HMAC",
 
         hash:
-          'SHA-256'
+          "SHA-256"
       },
       false,
-      ['sign']
+      [
+        "sign"
+      ]
     );
 
   return new Uint8Array(
     await crypto.subtle.sign(
-      'HMAC',
+      "HMAC",
       k,
-      typeof data ===
-      'string'
-        ? enc.encode(data)
+      typeof data === "string"
+        ? enc.encode(
+            data
+          )
         : data
     )
   );
@@ -1814,34 +2217,42 @@ async function hmac(
 
 
 
-async function sha256Hex(s) {
+async function sha256Hex(
+  s
+) {
   const b =
     await crypto.subtle.digest(
-      'SHA-256',
-      typeof s ===
-      'string'
-        ? enc.encode(s)
+      "SHA-256",
+      typeof s === "string"
+        ? enc.encode(
+            s
+          )
         : s
     );
 
   return bytesToHex(
-    new Uint8Array(b)
+    new Uint8Array(
+      b
+    )
   );
 }
 
 
 
-function awsEncode(s) {
-  return encodeURIComponent(s)
-    .replace(
-      /[!'()*]/g,
-      c =>
-        '%' +
-        c
-          .charCodeAt(0)
-          .toString(16)
-          .toUpperCase()
-    );
+function awsEncode(
+  s
+) {
+  return encodeURIComponent(
+    s
+  ).replace(
+    /[!'()*]/g,
+    c =>
+      "%" +
+      c
+        .charCodeAt(0)
+        .toString(16)
+        .toUpperCase()
+  );
 }
 
 
@@ -1871,7 +2282,7 @@ async function presign(
     !bucket
   ) {
     throw new Error(
-      'R2 API credentials are missing. Add R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME.'
+      "R2 API credentials are missing. Add R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME."
     );
   }
 
@@ -1883,7 +2294,7 @@ async function presign(
       .toISOString()
       .replace(
         /[:-]|\.\d{3}/g,
-        ''
+        ""
       );
 
   const date =
@@ -1893,59 +2304,65 @@ async function presign(
     );
 
   const region =
-    'auto';
+    "auto";
 
   const service =
-    's3';
+    "s3";
 
   const host =
     `${accountId}.r2.cloudflarestorage.com`;
 
-  const credentialScope =
+  const scope =
     `${date}/${region}/${service}/aws4_request`;
 
-  const canonicalUri =
-    '/' +
-    awsEncode(bucket) +
-    '/' +
+  const uri =
+    "/" +
+    awsEncode(
+      bucket
+    ) +
+    "/" +
     key
-      .split('/')
+      .split("/")
       .map(
         awsEncode
       )
-      .join('/');
+      .join("/");
 
   const qp = {
-    'X-Amz-Algorithm':
-      'AWS4-HMAC-SHA256',
+    "X-Amz-Algorithm":
+      "AWS4-HMAC-SHA256",
 
-    'X-Amz-Credential':
-      `${accessKey}/${credentialScope}`,
+    "X-Amz-Credential":
+      `${accessKey}/${scope}`,
 
-    'X-Amz-Date':
+    "X-Amz-Date":
       amzDate,
 
-    'X-Amz-Expires':
-      String(expires),
+    "X-Amz-Expires":
+      String(
+        expires
+      ),
 
-    'X-Amz-SignedHeaders':
-      'host'
+    "X-Amz-SignedHeaders":
+      "host"
   };
 
-  const canonicalQuery =
+  const query =
     Object
-      .keys(qp)
+      .keys(
+        qp
+      )
       .sort()
       .map(
         k =>
           `${awsEncode(k)}=${awsEncode(qp[k])}`
       )
-      .join('&');
+      .join("&");
 
-  const canonicalRequest =
+  const canonical =
     `${method}\n` +
-    `${canonicalUri}\n` +
-    `${canonicalQuery}\n` +
+    `${uri}\n` +
+    `${query}\n` +
     `host:${host}\n\n` +
     `host\n` +
     `UNSIGNED-PAYLOAD`;
@@ -1953,15 +2370,13 @@ async function presign(
   const stringToSign =
     `AWS4-HMAC-SHA256\n` +
     `${amzDate}\n` +
-    `${credentialScope}\n` +
-    `${await sha256Hex(
-      canonicalRequest
-    )}`;
+    `${scope}\n` +
+    `${await sha256Hex(canonical)}`;
 
   const kDate =
     await hmac(
       enc.encode(
-        'AWS4' +
+        "AWS4" +
         secretKey
       ),
       date
@@ -1982,7 +2397,7 @@ async function presign(
   const kSigning =
     await hmac(
       kService,
-      'aws4_request'
+      "aws4_request"
     );
 
   const signature =
@@ -1995,8 +2410,8 @@ async function presign(
 
   return (
     `https://${host}` +
-    `${canonicalUri}?` +
-    `${canonicalQuery}` +
+    `${uri}?` +
+    `${query}` +
     `&X-Amz-Signature=${signature}`
   );
 }
