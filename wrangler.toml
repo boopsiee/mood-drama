@@ -10,3 +10,4 @@ database_id = "fc65ad7b-3aec-4095-967a-00688703d517"
 binding = "VIDEOS"
 bucket_name = "mood-drama-videos"
 # redeploy
+# refresh secrets
